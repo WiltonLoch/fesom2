@@ -11,5 +11,11 @@ cp fesom.clock results/fesom.clock
 
 # Enter the work folder to avoid creation of files in the root folder
 cd work
+
+if [ "$1" = "profile" ]
+then
+    export NSYS_PROFILE=1
+fi
+
 sbatch job_levante
-timeout 20s squeue -i 1 -u $user
+squeue -i 1 -u $user

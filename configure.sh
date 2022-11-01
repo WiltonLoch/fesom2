@@ -5,5 +5,5 @@ set -e
 source env.sh # source this from your run script too
 mkdir build || true # make sure not to commit this to svn or git
 cd build
-cmake .. -DCMAKE_BUILD_TYPE=Release -DFESOM_OPENACC=True
+cmake .. -DCMAKE_BUILD_TYPE=Debug -DFESOM_OPENACC=True
 make install -j`nproc --all`

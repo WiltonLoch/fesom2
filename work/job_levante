@@ -31,7 +31,13 @@ cp $config_folder/namelist.icepack .
 export OMPI_MCA_opal_common_ucx_opal_mem_hooks=1
 
 date
-srun -l fesom.x > "fesom2.0.out"
+if [ "$NSYS_PROFILE" = "1" ]
+then
+    module load nvhpc
+    nsys profile -t openacc srun -l fesom.x > "fesom2.0.out"
+else
+    srun -l fesom.x > "fesom2.0.out"
+fi
 date
 
 # qstat -f $PBS_JOBID
