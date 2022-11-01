@@ -2,8 +2,9 @@ cmake_minimum_required(VERSION 3.4)
 
 project(fesom C Fortran)
 
-option(DISABLE_MULTITHREADING "disable asynchronous operations" OFF)
-set(PGI_GPU_ARCH "cc80" CACHE STRING "GPU Arch for PGI Compiler (cc35,cc50,cc60,cc70,cc80,...)")
+option(DISABLE_MULTITHREADING "disable asynchronous operations" ON)
+set(GPU_COMPUTE_CAPABILITY "cc80" CACHE STRING "GPU Arch for PGI Compiler (cc35,cc50,cc60,cc70,cc80,...)")
+set(GPU_FLAGS "math_uniform,cuda11.7,${GPU_COMPUTE_CAPABILITY}" CACHE STRING "Flags to be passed to \"-gpu\" when building gpu code")
 
 # get our source files
 set(src_home ${CMAKE_CURRENT_LIST_DIR}) # path to src directory starting from the dir containing our CMakeLists.txt
@@ -79,12 +80,12 @@ elseif(${CMAKE_Fortran_COMPILER_ID} STREQUAL  GNU )
    endif()
 elseif(${CMAKE_Fortran_COMPILER_ID} STREQUAL Cray )
       target_compile_options(${PROJECT_NAME} PRIVATE -c -emf -hbyteswapio -hflex_mp=conservative -hfp1 -hadd_paren -Ounroll0 -hipa0 -r am -s real64 -hnoomp)
-elseif(${CMAKE_Fortran_COMPILER_ID} STREQUAL PGI)
+elseif(${CMAKE_Fortran_COMPILER_ID} STREQUAL PGI OR ${CMAKE_Fortran_COMPILER_ID} STREQUAL NVHPC)
    if(${FESOM_OPENACC})
-	   target_compile_options(${PROJECT_NAME} PRIVATE -fast -fastsse -Mipa=fast,inline -O3 -Mallocatable=95 -Mr8 -pgf90libs -acc -ta=tesla:${PGI_GPU_ARCH} -Minfo=accel)
-	   set(CMAKE_EXE_LINKER_FLAGS "-acc -ta=tesla:${PGI_GPU_ARCH}")
+       target_compile_options(${PROJECT_NAME} PRIVATE -Mallocatable=95 -Mr8 -pgf90libs -Mnofma -Minfo=all -acc -gpu=${GPU_FLAGS})
+       set(CMAKE_EXE_LINKER_FLAGS "-acc -gpu=${GPU_FLAGS}")
    else()
-      target_compile_options(${PROJECT_NAME} PRIVATE -fast -fastsse -Mipa=fast,inline -O3 -Mallocatable=95 -Mr8 -pgf90libs)
+       target_compile_options(${PROJECT_NAME} PRIVATE -Mallocatable=95 -Mr8 -pgf90libs -Mnofma)
    endif()
 endif()
 target_include_directories(${PROJECT_NAME} PRIVATE ${NETCDF_Fortran_INCLUDE_DIRECTORIES} ${OASIS_Fortran_INCLUDE_DIRECTORIES})

@@ -7,6 +7,8 @@ if(NOT CMAKE_BUILD_TYPE)
 endif()
 
 project(FESOM2.0)
+
+set(CMAKE_VERBOSE_MAKEFILE ON)
 set(TOPLEVEL_DIR ${CMAKE_CURRENT_LIST_DIR})
 set(FESOM_COUPLED OFF CACHE BOOL "compile fesom standalone or with oasis support (i.e. coupled)")
 set(OIFS_COUPLED OFF CACHE BOOL "compile fesom coupled to OpenIFS. (Also needs FESOM_COUPLED to work)")

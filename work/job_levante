@@ -1,0 +1,42 @@
+#!/bin/bash
+#SBATCH --job-name=fesom
+#SBATCH -p gpu
+#SBATCH --ntasks-per-node=2
+#SBATCH --ntasks=2
+#SBATCH --time=00:30:00
+#SBATCH -o slurm-out.out
+#SBATCH -e slurm-err.out
+#SBATCH -A ka1298
+#SBATCH --mem=0
+
+ulimit -s 204800
+
+set -x
+echo Submitted job: $jobid
+squeue -u $USER
+
+# determine JOBID
+JOBID=`echo $SLURM_JOB_ID |cut -d"." -f1`
+
+config_folder=../config_pi
+
+ln -s ../bin/fesom.x .           # cp -n ../bin/fesom.x
+cp $config_folder/namelist.config  .
+cp $config_folder/namelist.forcing .
+cp $config_folder/namelist.oce     .
+cp $config_folder/namelist.io      .
+cp $config_folder/namelist.ice     .
+cp $config_folder/namelist.icepack .
+
+export OMPI_MCA_opal_common_ucx_opal_mem_hooks=1
+
+date
+srun -l fesom.x > "fesom2.0.out"
+date
+
+# qstat -f $PBS_JOBID
+#export EXITSTATUS=$?
+#if [ ${EXITSTATUS} -eq 0 ] || [ ${EXITSTATUS} -eq 127 ] ; then
+#sbatch job_mistral
+#fi
+
