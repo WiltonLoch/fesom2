@@ -214,6 +214,9 @@ node_size=myDim_nod2D+eDim_nod2D
 allocate(UV(2, nl-1, elem_size))
 allocate(UV_rhs(2,nl-1, elem_size))
 allocate(UV_rhsAB(2,nl-1, elem_size))
+allocate(UV_t(nl-1, elem_size, 2))
+allocate(UV_rhs_t(nl-1, elem_size, 2))
+allocate(UV_rhsAB_t(nl-1, elem_size, 2))
 allocate(Visc(nl-1, elem_size))
 ! ================
 ! elevation and its rhs
