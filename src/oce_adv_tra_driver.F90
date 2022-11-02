@@ -78,7 +78,7 @@ subroutine do_oce_adv_tra(ttf, ttfAB, vel, w, wi, we, do_Xmoment, dttf_h, dttf_v
 
     call nvtxStartRange('do_oce_adv_tra')
     !$acc update device(hnode_new)
-
+    !$acc data copyin(areasvol)
     !___________________________________________________________________________
     ! compute FCT horzontal and vertical low order solution as well as lw order
     ! part of antidiffusive flux
@@ -151,7 +151,6 @@ subroutine do_oce_adv_tra(ttf, ttfAB, vel, w, wi, we, do_Xmoment, dttf_h, dttf_v
         !$acc wait(stream_hor_adv_tra)
 #endif
 
-        !$acc data copyin(areasvol)
         !$acc parallel loop gang present(fct_LO,adv_flux_ver,ttf,nlevels_nod2D,ulevels_nod2D,hnode,hnode_new,area,areasvol)&
 #ifdef WITH_ACC_VECTOR_LENGTH
         !$acc& vector_length(z_vector_length) &
@@ -170,8 +169,7 @@ subroutine do_oce_adv_tra(ttf, ttfAB, vel, w, wi, we, do_Xmoment, dttf_h, dttf_v
             end do
         end do
         !$acc end parallel loop
-        !$acc end data
-
+        
         if (w_split) then !wvel/=wvel_e
             ! update for implicit contribution (w_split option)
 #ifdef WITH_ACC_ASYNC
@@ -264,7 +262,7 @@ subroutine do_oce_adv_tra(ttf, ttfAB, vel, w, wi, we, do_Xmoment, dttf_h, dttf_v
     !$acc wait(stream_ver_adv_tra)
     !$acc wait(stream_hor_adv_tra)
 #endif
-
+    !$acc end data
     call nvtxEndRange
 
 end subroutine do_oce_adv_tra
