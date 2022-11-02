@@ -12,6 +12,8 @@ cp fesom.clock results/fesom.clock
 # Enter the work folder to avoid creation of files in the root folder
 cd work
 
+export NVCOMPILER_ACC_NOTIFY=3
+
 if [ "$1" = "profile" ]
 then
     export NSYS_PROFILE=1
