@@ -4,7 +4,7 @@ project(fesom C Fortran)
 
 option(DISABLE_MULTITHREADING "disable asynchronous operations" ON)
 set(GPU_COMPUTE_CAPABILITY "cc80" CACHE STRING "GPU Arch for PGI Compiler (cc35,cc50,cc60,cc70,cc80,...)")
-set(GPU_FLAGS "math_uniform,cuda11.7,${GPU_COMPUTE_CAPABILITY}" CACHE STRING "Flags to be passed to \"-gpu\" when building gpu code")
+set(GPU_FLAGS "math_uniform,cuda11.7,${GPU_COMPUTE_CAPABILITY},autocompare" CACHE STRING "Flags to be passed to \"-gpu\" when building gpu code")
 
 # get our source files
 set(src_home ${CMAKE_CURRENT_LIST_DIR}) # path to src directory starting from the dir containing our CMakeLists.txt
@@ -125,7 +125,7 @@ if(WITH_NVTX)
   endif()
 endif()
 option(WITH_ACC_VECTOR_LENGTH "Enable ACC VECTOR_LENGTH directive" ON)
-option(WITH_ACC_ASYNC "Enable ACC ASYNC directive" ON)
+option(WITH_ACC_ASYNC "Enable ACC ASYNC directive" OFF)
 
 target_compile_definitions(settings
   INTERFACE

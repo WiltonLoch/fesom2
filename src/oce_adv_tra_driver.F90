@@ -77,6 +77,7 @@ subroutine do_oce_adv_tra(ttf, ttfAB, vel, w, wi, we, do_Xmoment, dttf_h, dttf_v
 #include "associate_mesh.h"
 
     call nvtxStartRange('do_oce_adv_tra')
+    !$acc update device(hnode_new)
 
     !___________________________________________________________________________
     ! compute FCT horzontal and vertical low order solution as well as lw order
@@ -86,7 +87,7 @@ subroutine do_oce_adv_tra(ttf, ttfAB, vel, w, wi, we, do_Xmoment, dttf_h, dttf_v
         ! init_zero=.true.  : zero the horizontal flux before computation
         ! init_zero=.false. : input flux will be substracted
         call adv_tra_hor_upw1(ttf, vel, do_Xmoment, mesh, adv_flux_hor, init_zero=.true.)
-    
+
         ! update the LO solution for horizontal contribution
         nzmax=mesh%nl-1
         
@@ -100,15 +101,17 @@ subroutine do_oce_adv_tra(ttf, ttfAB, vel, w, wi, we, do_Xmoment, dttf_h, dttf_v
             fct_LO(nz,n)=0.0_WP
           end do
         end do
+        !$acc end parallel loop
 
-        !$acc parallel loop gang present(edges,edge_tri,nlevels,ulevels,fct_LO,adv_flux_hor)&
+        !$acc parallel present(edges,edge_tri,nlevels,ulevels,fct_LO,adv_flux_hor)&
 #ifdef WITH_ACC_VECTOR_LENGTH
         !$acc& vector_length(z_vector_length)&
 #endif
 #ifdef WITH_ACC_ASYNC
         !$acc& async(stream_hor_adv_tra) &
 #endif
-        !$acc& private(enodes,el,nu1,nl1,nu2,nl2,nu12,nl12)
+        !$acc& private(enodes,el)
+        !$acc loop seq
         do e=1, myDim_edge2D
             enodes=edges(:,e)
             el=edge_tri(:,e)
@@ -126,14 +129,17 @@ subroutine do_oce_adv_tra(ttf, ttfAB, vel, w, wi, we, do_Xmoment, dttf_h, dttf_v
             if (nu2>0) nu12 = min(nu1,nu2)
 
             !!PS do  nz=1, max(nl1, nl2)
-            !$acc loop vector
+            !$acc loop gang vector
             do nz=nu12, nl12
                 !$acc atomic update
                 fct_LO(nz, enodes(1))=fct_LO(nz, enodes(1))+adv_flux_hor(nz, e)
                 !$acc atomic update
                 fct_LO(nz, enodes(2))=fct_LO(nz, enodes(2))-adv_flux_hor(nz, e)
             end do
+            !$acc end loop
         end do
+        !$acc end loop
+        !$acc end parallel
 
         ! compute the low order upwind vertical flux (explicit part only)
         ! zero the input/output flux before computation
@@ -144,7 +150,9 @@ subroutine do_oce_adv_tra(ttf, ttfAB, vel, w, wi, we, do_Xmoment, dttf_h, dttf_v
         !$acc wait(stream_hnode_update)
         !$acc wait(stream_hor_adv_tra)
 #endif
-        !$acc parallel loop gang present(fct_LO,adv_flux_ver,ttf,nlevels_nod2D,ulevels_nod2D,hnode,hnode_new,area)&
+
+        !$acc data copyin(areasvol)
+        !$acc parallel loop gang present(fct_LO,adv_flux_ver,ttf,nlevels_nod2D,ulevels_nod2D,hnode,hnode_new,area,areasvol)&
 #ifdef WITH_ACC_VECTOR_LENGTH
         !$acc& vector_length(z_vector_length) &
 #endif
@@ -161,6 +169,8 @@ subroutine do_oce_adv_tra(ttf, ttfAB, vel, w, wi, we, do_Xmoment, dttf_h, dttf_v
                 fct_LO(nz,n)=(ttf(nz,n)*hnode(nz,n)+(fct_LO(nz,n)+(adv_flux_ver(nz, n)-adv_flux_ver(nz+1, n)))*dt/areasvol(nz,n))/hnode_new(nz,n)
             end do
         end do
+        !$acc end parallel loop
+        !$acc end data
 
         if (w_split) then !wvel/=wvel_e
             ! update for implicit contribution (w_split option)
