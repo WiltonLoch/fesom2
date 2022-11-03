@@ -114,10 +114,10 @@ subroutine ini_ocean_io(year, mesh)
   call def_variable(oid, 'hnode',    (/nl-1,  nod2D/), 'nodal layer thickness', 'm',   hnode);
   
   !___Define the netCDF variables for 3D fields_______________________________
-  call def_variable(oid, 'u',        (/nl-1, elem2D/), 'zonal velocity',        'm/s', UV(1,:,:));
-  call def_variable(oid, 'v',        (/nl-1, elem2D/), 'meridional velocity',   'm/s', UV(2,:,:));
-  call def_variable(oid, 'urhs_AB',  (/nl-1, elem2D/), 'Adams–Bashforth for u', 'm/s', UV_rhsAB(1,:,:));
-  call def_variable(oid, 'vrhs_AB',  (/nl-1, elem2D/), 'Adams–Bashforth for v', 'm/s', UV_rhsAB(2,:,:));
+  call def_variable(oid, 'u',        (/nl-1, elem2D/), 'zonal velocity',        'm/s', UV_t(:,:,1));
+  call def_variable(oid, 'v',        (/nl-1, elem2D/), 'meridional velocity',   'm/s', UV_t(:,:,2));
+  call def_variable(oid, 'urhs_AB',  (/nl-1, elem2D/), 'Adams–Bashforth for u', 'm/s', UV_rhsAB_t(:,:,1));
+  call def_variable(oid, 'vrhs_AB',  (/nl-1, elem2D/), 'Adams–Bashforth for v', 'm/s', UV_rhsAB_t(:,:,2));
   
   !___Save restart variables for TKE and IDEMIX_________________________________
   if (trim(mix_scheme)=='cvmix_TKE' .or. trim(mix_scheme)=='cvmix_TKE+IDEMIX') then
@@ -270,6 +270,12 @@ subroutine restart(istep, l_write, l_read, mesh)
 
   ! write restart
   if(mype==0) write(*,*)'Do output (netCDF, restart) ...'
+  UV_t(:,:,1) = UV(1,:,:)
+  UV_t(:,:,2) = UV(2,:,:)
+  UV_rhs_t(:,:,1) = UV_rhs(1,:,:)
+  UV_rhs_t(:,:,2) = UV_rhs(2,:,:)
+  UV_rhsAB_t(:,:,1) = UV_rhsAB(1,:,:)
+  UV_rhsAB_t(:,:,2) = UV_rhsAB(2,:,:)
   call assoc_ids(oid);                  call was_error(oid)  
   call write_restart(oid, istep, mesh); call was_error(oid)
   if (use_ice) then
