@@ -263,7 +263,6 @@ subroutine adv_tracers_ale(tr_num, mesh)
         end do
     end do
     call do_oce_adv_tra(tr_arr(:,:,tr_num), tr_arr_old(:,:,tr_num), UV, wvel, wvel_i, wvel_e, 1, del_ttf_advhoriz, del_ttf_advvert, tra_adv_ph, tra_adv_pv, mesh)
-
     !___________________________________________________________________________
     ! update array for total tracer flux del_ttf with the fluxes from horizontal
     ! and vertical advection
@@ -322,7 +321,7 @@ subroutine diff_tracers_ale(tr_num, mesh)
     ! in danilovs srcipt
     ! includes Redi diffusivity if Redi=.true.
     call diff_part_hor_redi(mesh) ! seems to be ~9% faster than diff_part_hor
-    
+
     !___________________________________________________________________________
     ! do vertical diffusion: explicite 
     if (.not. i_vert_diff) call diff_ver_part_expl_ale(tr_num, mesh)
@@ -353,6 +352,7 @@ subroutine diff_tracers_ale(tr_num, mesh)
         !tr_arr(1:nzmax,n,tr_num)=(hnode(1:nzmax,n)*tr_arr(1:nzmax,n,tr_num)+ &
         !                        del_ttf(1:nzmax,n))/hnode_new(1:nzmax,n)
     end do
+    !$acc end parallel loop
 
     !___________________________________________________________________________
     if (i_vert_diff) then
@@ -1077,14 +1077,15 @@ subroutine diff_part_hor_redi(mesh)
     call nvtxStartRange('diff_part_hor_redi')
 
     if (Redi) isredi=1._WP
-!$acc parallel loop gang present(edge_cross_dxdy,edge_tri,edges,nlevels,elem2d_nodes,helem,tr_z,tr_xy,del_ttf,dt,area,ulevels,slope_tapered,ki)&
+!$acc parallel present(edge_cross_dxdy,edge_tri,edges,nlevels,elem2d_nodes,helem,tr_z,tr_xy,del_ttf,dt,area,ulevels,slope_tapered,ki)&
 #ifdef WITH_ACC_VECTOR_LENGTH
 !$acc& vector_length(z_vector_length)&
 #endif
 #ifdef WITH_ACC_ASYNC
 !$acc& async(stream_hor_diff_tra)&
 #endif
-!$acc& private(rhs1,rhs2,deltaX1,deltaY1,deltaX2, deltaY2,el,enodes,n2,nl1,ul1,nl2,ul2,nl12,ul12,nz,elnodes)
+!$acc& private(rhs1,rhs2,c,deltaX1,deltaY1,deltaX2, deltaY2,el,enodes,n2,nl1,ul1,nl2,ul2,nl12,ul12,nz,elnodes)
+!$acc loop seq
     do edge=1, myDim_edge2D
         rhs1=0.0_WP
         rhs2=0.0_WP
@@ -1114,7 +1115,7 @@ subroutine diff_part_hor_redi(mesh)
         
         !_______________________________________________________________________
         ! (A)
-        !$acc loop vector&
+        !$acc loop gang vector&
         !$acc& private(Kh,dz,c,Fx,Fy,Tx,Ty,SxTz,SyTz,Tz)
         do nz=ul1,ul12-1
             Kh=sum(Ki(nz, enodes))/2.0_WP
@@ -1130,11 +1131,12 @@ subroutine diff_part_hor_redi(mesh)
             rhs1(nz) = rhs1(nz) + c
             rhs2(nz) = rhs2(nz) - c
         end do
+        !$acc end loop
         
         !_______________________________________________________________________
         ! (B)
         if (ul2>0) then
-            !$acc loop vector&
+            !$acc loop gang vector&
             !$acc& private(Kh,dz,c,Fx,Fy,Tx,Ty,SxTz,SyTz,Tz)
             do nz=ul2,ul12-1
                 Kh=sum(Ki(nz, enodes))/2.0_WP
@@ -1151,11 +1153,12 @@ subroutine diff_part_hor_redi(mesh)
                 rhs2(nz) = rhs2(nz) - c
             end do
         end if
+        !$acc end loop
         
         !_______________________________________________________________________
         ! (C)
         !!PS do nz=1,nl12
-        !$acc loop vector&
+        !$acc loop gang vector&
         !$acc& private(Kh,dz,c,Fx,Fy,Tx,Ty,SxTz,SyTz,Tz)
         do nz=ul12,nl12
             Kh=sum(Ki(nz, enodes))/2.0_WP
@@ -1171,10 +1174,11 @@ subroutine diff_part_hor_redi(mesh)
             rhs1(nz) = rhs1(nz) + c
             rhs2(nz) = rhs2(nz) - c
         enddo
+        !$acc end loop
         
         !_______________________________________________________________________
         ! (D)
-        !$acc loop vector&
+        !$acc loop gang vector&
         !$acc& private(Kh,dz,c,Fx,Fy,Tx,Ty,SxTz,SyTz,Tz)
         do nz=nl12+1,nl1
             Kh=sum(Ki(nz, enodes))/2.0_WP
@@ -1190,10 +1194,11 @@ subroutine diff_part_hor_redi(mesh)
             rhs1(nz) = rhs1(nz) + c
             rhs2(nz) = rhs2(nz) - c
         end do
+        !$acc end loop
         
         !_______________________________________________________________________
         ! (E)
-        !$acc loop vector&
+        !$acc loop gang vector&
         !$acc& private(Kh,dz,c,Fx,Fy,Tx,Ty,SxTz,SyTz,Tz)
         do nz=nl12+1,nl2
             Kh=sum(Ki(nz, enodes))/2.0_WP
@@ -1209,19 +1214,24 @@ subroutine diff_part_hor_redi(mesh)
             rhs1(nz) = rhs1(nz) + c
             rhs2(nz) = rhs2(nz) - c
         end do
+        !$acc end loop
         
         !_______________________________________________________________________
         nl12=max(nl1,nl2)
         ul12 = ul1
         if (ul2>0) ul12=min(ul1,ul2)
-        !$acc loop vector
+        !$acc loop gang vector
         do nz=ul12,nl12
             !$acc atomic update
             del_ttf(nz,enodes(1))=del_ttf(nz,enodes(1))+rhs1(nz)*dt/areasvol(nz,enodes(1))
             !$acc atomic update
             del_ttf(nz,enodes(2))=del_ttf(nz,enodes(2))+rhs2(nz)*dt/areasvol(nz,enodes(2))
         end do
+        !$acc end loop
     end do
+    !$acc end loop
+    !$acc end parallel
+    !$acc update self(del_ttf)
     call nvtxEndRange
 end subroutine diff_part_hor_redi
 !
