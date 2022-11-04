@@ -338,7 +338,7 @@ subroutine oce_tra_adv_fct(dttf_h, dttf_v, ttf, lo, adf_h, adf_v, mesh)
     call nvtxStartRange("horizontal")
 
     ! Wait for stream copying adf_h onto GPU, then perform kernel
-    !$acc parallel present(nlevels,ulevels,edges,edge_tri,fct_plus,fct_minus,adf_h)&
+    !$acc parallel loop gang present(nlevels,ulevels,edges,edge_tri,fct_plus,fct_minus,adf_h)&
 #ifdef WITH_ACC_VECTOR_LENGTH
     !$acc& vector_length(z_vector_length)&
 #endif
@@ -346,7 +346,6 @@ subroutine oce_tra_adv_fct(dttf_h, dttf_v, ttf, lo, adf_h, adf_v, mesh)
     !$acc& async(stream_hor_adv_tra)&
 #endif
     !$acc& private(enodes,el,nl1,nu1,nl2,nu2,nl12,nu12)
-    !$acc loop seq
     do edge=1, myDim_edge2D
         enodes(1:2)=edges(:,edge)
         el=edge_tri(:,edge)
@@ -363,7 +362,7 @@ subroutine oce_tra_adv_fct(dttf_h, dttf_v, ttf, lo, adf_h, adf_v, mesh)
         nu12 = nu1
         if (nu2>0) nu12 = min(nu1,nu2)
         
-        !$acc loop gang vector
+        !$acc loop vector
         do nz=nu12, nl12
             !$acc atomic update
             fct_plus (nz,enodes(1))=fct_plus (nz,enodes(1)) + max(0.0_WP, adf_h(nz,edge))
@@ -376,8 +375,7 @@ subroutine oce_tra_adv_fct(dttf_h, dttf_v, ttf, lo, adf_h, adf_v, mesh)
         end do
         !$acc end loop
     end do
-    !$acc end loop
-    !$acc end parallel
+    !$acc end parallel loop
     call nvtxEndRange
     
 #ifdef WITH_ACC_ASYNC

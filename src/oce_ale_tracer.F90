@@ -1077,7 +1077,7 @@ subroutine diff_part_hor_redi(mesh)
     call nvtxStartRange('diff_part_hor_redi')
 
     if (Redi) isredi=1._WP
-!$acc parallel present(edge_cross_dxdy,edge_tri,edges,nlevels,elem2d_nodes,helem,tr_z,tr_xy,del_ttf,dt,area,ulevels,slope_tapered,ki)&
+!$acc parallel loop gang present(edge_cross_dxdy,edge_tri,edges,nlevels,elem2d_nodes,helem,tr_z,tr_xy,del_ttf,dt,area,ulevels,slope_tapered,ki)&
 #ifdef WITH_ACC_VECTOR_LENGTH
 !$acc& vector_length(z_vector_length)&
 #endif
@@ -1085,7 +1085,6 @@ subroutine diff_part_hor_redi(mesh)
 !$acc& async(stream_hor_diff_tra)&
 #endif
 !$acc& private(rhs1,rhs2,c,deltaX1,deltaY1,deltaX2, deltaY2,el,enodes,n2,nl1,ul1,nl2,ul2,nl12,ul12,nz,elnodes)
-!$acc loop seq
     do edge=1, myDim_edge2D
         rhs1=0.0_WP
         rhs2=0.0_WP
@@ -1115,7 +1114,7 @@ subroutine diff_part_hor_redi(mesh)
         
         !_______________________________________________________________________
         ! (A)
-        !$acc loop gang vector&
+        !$acc loop vector&
         !$acc& private(Kh,dz,c,Fx,Fy,Tx,Ty,SxTz,SyTz,Tz)
         do nz=ul1,ul12-1
             Kh=sum(Ki(nz, enodes))/2.0_WP
@@ -1136,7 +1135,7 @@ subroutine diff_part_hor_redi(mesh)
         !_______________________________________________________________________
         ! (B)
         if (ul2>0) then
-            !$acc loop gang vector&
+            !$acc loop vector&
             !$acc& private(Kh,dz,c,Fx,Fy,Tx,Ty,SxTz,SyTz,Tz)
             do nz=ul2,ul12-1
                 Kh=sum(Ki(nz, enodes))/2.0_WP
@@ -1158,7 +1157,7 @@ subroutine diff_part_hor_redi(mesh)
         !_______________________________________________________________________
         ! (C)
         !!PS do nz=1,nl12
-        !$acc loop gang vector&
+        !$acc loop vector&
         !$acc& private(Kh,dz,c,Fx,Fy,Tx,Ty,SxTz,SyTz,Tz)
         do nz=ul12,nl12
             Kh=sum(Ki(nz, enodes))/2.0_WP
@@ -1178,7 +1177,7 @@ subroutine diff_part_hor_redi(mesh)
         
         !_______________________________________________________________________
         ! (D)
-        !$acc loop gang vector&
+        !$acc loop vector&
         !$acc& private(Kh,dz,c,Fx,Fy,Tx,Ty,SxTz,SyTz,Tz)
         do nz=nl12+1,nl1
             Kh=sum(Ki(nz, enodes))/2.0_WP
@@ -1198,7 +1197,7 @@ subroutine diff_part_hor_redi(mesh)
         
         !_______________________________________________________________________
         ! (E)
-        !$acc loop gang vector&
+        !$acc loop vector&
         !$acc& private(Kh,dz,c,Fx,Fy,Tx,Ty,SxTz,SyTz,Tz)
         do nz=nl12+1,nl2
             Kh=sum(Ki(nz, enodes))/2.0_WP
@@ -1220,7 +1219,7 @@ subroutine diff_part_hor_redi(mesh)
         nl12=max(nl1,nl2)
         ul12 = ul1
         if (ul2>0) ul12=min(ul1,ul2)
-        !$acc loop gang vector
+        !$acc loop vector
         do nz=ul12,nl12
             !$acc atomic update
             del_ttf(nz,enodes(1))=del_ttf(nz,enodes(1))+rhs1(nz)*dt/areasvol(nz,enodes(1))
@@ -1229,9 +1228,7 @@ subroutine diff_part_hor_redi(mesh)
         end do
         !$acc end loop
     end do
-    !$acc end loop
-    !$acc end parallel
-    !$acc update self(del_ttf)
+    !$acc end parallel loop
     call nvtxEndRange
 end subroutine diff_part_hor_redi
 !

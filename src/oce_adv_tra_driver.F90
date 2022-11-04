@@ -103,7 +103,7 @@ subroutine do_oce_adv_tra(ttf, ttfAB, vel, w, wi, we, do_Xmoment, dttf_h, dttf_v
         end do
         !$acc end parallel loop
 
-        !$acc parallel present(edges,edge_tri,nlevels,ulevels,fct_LO,adv_flux_hor)&
+        !$acc parallel loop gang present(edges,edge_tri,nlevels,ulevels,fct_LO,adv_flux_hor)&
 #ifdef WITH_ACC_VECTOR_LENGTH
         !$acc& vector_length(z_vector_length)&
 #endif
@@ -111,7 +111,6 @@ subroutine do_oce_adv_tra(ttf, ttfAB, vel, w, wi, we, do_Xmoment, dttf_h, dttf_v
         !$acc& async(stream_hor_adv_tra) &
 #endif
         !$acc& private(enodes,el)
-        !$acc loop seq
         do e=1, myDim_edge2D
             enodes=edges(:,e)
             el=edge_tri(:,e)
@@ -129,7 +128,7 @@ subroutine do_oce_adv_tra(ttf, ttfAB, vel, w, wi, we, do_Xmoment, dttf_h, dttf_v
             if (nu2>0) nu12 = min(nu1,nu2)
 
             !!PS do  nz=1, max(nl1, nl2)
-            !$acc loop gang vector
+            !$acc loop vector
             do nz=nu12, nl12
                 !$acc atomic update
                 fct_LO(nz, enodes(1))=fct_LO(nz, enodes(1))+adv_flux_hor(nz, e)
@@ -138,8 +137,7 @@ subroutine do_oce_adv_tra(ttf, ttfAB, vel, w, wi, we, do_Xmoment, dttf_h, dttf_v
             end do
             !$acc end loop
         end do
-        !$acc end loop
-        !$acc end parallel
+        !$acc end parallel loop
 
         ! compute the low order upwind vertical flux (explicit part only)
         ! zero the input/output flux before computation
@@ -335,7 +333,7 @@ subroutine oce_tra_adv_flux2dtracer(dttf_h, dttf_v, flux_h, flux_v, mesh, use_lo
 
 
     ! Horizontal
-    !$acc parallel present(dttf_h,nlevels,ulevels,edges,edge_tri,flux_h,area)&
+    !$acc parallel loop gang present(dttf_h,nlevels,ulevels,edges,edge_tri,flux_h,area)&
 #ifdef WITH_ACC_VECTOR_LENGTH
     !$acc& vector_length(z_vector_length)&
 #endif
@@ -343,7 +341,6 @@ subroutine oce_tra_adv_flux2dtracer(dttf_h, dttf_v, flux_h, flux_v, mesh, use_lo
     !$acc& async(stream_hor_adv_tra)&
 #endif
     !$acc& private(enodes,el,nl1,nl2,nu1,nu2)
-    !$acc loop seq
     do edge=1, myDim_edge2D
         enodes(1:2)=edges(:,edge)
         el=edge_tri(:,edge)
@@ -362,7 +359,7 @@ subroutine oce_tra_adv_flux2dtracer(dttf_h, dttf_v, flux_h, flux_v, mesh, use_lo
         if (nu2>0) nu12 = min(nu1,nu2)
 
         !!PS do  nz=1, max(nl1, nl2)
-        !$acc loop gang vector
+        !$acc loop vector
         do nz=nu12, nl12
             !$acc atomic update
             dttf_h(nz,enodes(1))=dttf_h(nz,enodes(1))+flux_h(nz,edge)*dt/areasvol(nz,enodes(1))
@@ -371,7 +368,6 @@ subroutine oce_tra_adv_flux2dtracer(dttf_h, dttf_v, flux_h, flux_v, mesh, use_lo
         end do
         !$acc end loop
     end do
-    !$acc end loop
-    !$acc end parallel
+    !$acc end parallel loop
     call nvtxEndRange
 end subroutine oce_tra_adv_flux2dtracer
