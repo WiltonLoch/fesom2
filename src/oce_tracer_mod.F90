@@ -32,16 +32,21 @@ SUBROUTINE tracer_gradient_elements(ttf, mesh)
 
 #include  "associate_mesh.h"
 
+    !$ACC PARALLEL LOOP GANG PRIVATE(elnodes)
     DO elem=1, myDim_elem2D
         elnodes=elem2D_nodes(:,elem)
         nzmin = ulevels(elem)
         nzmax = nlevels(elem)
         !!PS DO nz=1, nlevels(elem)-1
+        !$ACC LOOP VECTOR
         DO nz=nzmin, nzmax-1   
             tr_xy(1,nz, elem)=sum(gradient_sca(1:3,elem)*ttf(nz,elnodes))
             tr_xy(2,nz, elem)=sum(gradient_sca(4:6,elem)*ttf(nz,elnodes))
         END DO
+        !$ACC END LOOP
     END DO
+    !$ACC END PARALLEL LOOP
+
 END SUBROUTINE tracer_gradient_elements
 !
 !
@@ -58,11 +63,13 @@ SUBROUTINE init_tracers_AB(tr_num, mesh)
     integer                    :: tr_num,n,nz 
     type(t_mesh), intent(in)   , target :: mesh
 
+    !$ACC KERNELS
     !filling work arrays
     del_ttf=0.0_WP
 
     !AB interpolation
     tr_arr_old(:,:,tr_num)=-(0.5_WP+epsilon)*tr_arr_old(:,:,tr_num)+(1.5_WP+epsilon)*tr_arr(:,:,tr_num)
+    !$ACC END KERNELS
 
     if (flag_debug .and. mype==0)  print *, achar(27)//'[38m'//'             --> call tracer_gradient_elements'//achar(27)//'[0m'
     call tracer_gradient_elements(tr_arr_old(:,:,tr_num), mesh)
@@ -156,18 +163,22 @@ SUBROUTINE tracer_gradient_z(ttf, mesh)
 
 #include  "associate_mesh.h"
 
+    !$ACC PARALLEL LOOP GANG
     DO n=1, myDim_nod2D+eDim_nod2D
     !!PS nlev=nlevels_nod2D(n)
     nzmax=nlevels_nod2D(n)
     nzmin=ulevels_nod2D(n)
     !!PS DO nz=2,  nlev-1
+    !$ACC LOOP VECTOR
     DO nz=nzmin+1,  nzmax-1
         dz=0.5_WP*(hnode_new(nz-1,n)+hnode_new(nz,n))
         tr_z(nz, n)=(ttf(nz-1,n)-ttf(nz,n))/dz
     END DO
+    !$ACC END LOOP
     !!PS tr_z(1,    n)=0.0_WP
     !!PS tr_z(nlev, n)=0.0_WP
     tr_z(nzmin, n)=0.0_WP
     tr_z(nzmax, n)=0.0_WP
     END DO
+    !$ACC END PARALLEL LOOP
 END SUBROUTINE tracer_gradient_z
