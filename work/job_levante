@@ -1,7 +1,7 @@
 #!/bin/bash
 #SBATCH --job-name=fesom
 #SBATCH --partition=gpu
-# #SBATCH --reservation=phase2-gpu
+#SBATCH --reservation=phase2-gpu
 #SBATCH --nodes=1
 #SBATCH --threads-per-core=2
 #SBATCH --time=00:30:00
@@ -21,7 +21,7 @@ squeue -u $USER
 # determine JOBID
 JOBID=`echo $SLURM_JOB_ID |cut -d"." -f1`
 
-config_folder=../config_pi
+config_folder=../config_core2
 
 ln -s ../bin/fesom.x .           # cp -n ../bin/fesom.x
 cp $config_folder/namelist.config  .
@@ -51,7 +51,7 @@ date
 if [ "$NSYS_PROFILE" = "1" ]
 then
     module load nvhpc
-    nsys profile -t openacc srun -l fesom.x > "fesom2.0.out"
+    srun -l --kill-on-bad-exit=1 --nodes=1 --ntasks=2 run_wrapper.sh -n 2 -o 0 -e nsys\ profile\ -t\ openacc,nvtx,mpi\ ../bin/fesom.x > "fesom2.0.out"
 else
     srun -l --kill-on-bad-exit=1 --nodes=1 --ntasks=2 run_wrapper.sh -n 2 -o 0 -e ../bin/fesom.x > "fesom2.0.out"
 fi

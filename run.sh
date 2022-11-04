@@ -1,7 +1,7 @@
 #! /bin/sh
 #
 
-user=k202167
+user=$(whoami)
 
 # Remove restart files to avoid restart run
 rm results/*restart*
