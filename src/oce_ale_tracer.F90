@@ -115,7 +115,7 @@ subroutine solve_tracers_ale(mesh)
 
     implicit none
     type(t_mesh), intent(in) , target :: mesh
-    integer                  :: tr_num, node, nzmax, nzmin
+    integer                  :: tr_num, node, nzmax, nzmin, nz
     real(kind=WP)            :: aux_tr(mesh%nl-1,myDim_nod2D+eDim_nod2D)
     character(len=6) :: trid_str
 
@@ -193,29 +193,39 @@ subroutine solve_tracers_ale(mesh)
     ! --> if we do only where (tr_arr(:,:,2) < 3._WP ) we also fill up the bottom 
     !     topogrpahy with values which are then writte into the output --> thats why
     !     do node=1,.... and tr_arr(node,1:nzmax,2)
+    !$ACC PARALLEL LOOP GANG
     do node=1,myDim_nod2D+eDim_nod2D
         nzmax=nlevels_nod2D(node)-1
         nzmin=ulevels_nod2D(node)
         !!PS where (tr_arr(1:nzmax,node,2) > 45._WP)
         !!PS     tr_arr(1:nzmax,node,2)=45._WP
         !!PS end where
-        where (tr_arr(nzmin:nzmax,node,2) > 45._WP)
-            tr_arr(nzmin:nzmax,node,2)=45._WP
-        end where
-
+!        where (tr_arr(nzmin:nzmax,node,2) > 45._WP)
+!            tr_arr(nzmin:nzmax,node,2)=45._WP
+!        end where
         !!PS where (tr_arr(1:nzmax,node,2) < 3._WP )
         !!PS     tr_arr(1:nzmax,node,2)=3._WP
         !!PS end where
-        where (tr_arr(nzmin:nzmax,node,2) < 3._WP )
-            tr_arr(nzmin:nzmax,node,2)=3._WP
-        end where
-        
+!        where (tr_arr(nzmin:nzmax,node,2) < 3._WP )
+!            tr_arr(nzmin:nzmax,node,2)=3._WP
+!        end where
+        !$ACC LOOP VECTOR
+        DO nz=nzmin,nzmax
+            IF (tr_arr(nz,node,2) > 45._WP) THEN
+                tr_arr(nz,node,2) = 45._WP
+            ELSE IF (tr_arr(nz,node,2) < 3._WP ) THEN
+                tr_arr(nz,node,2) = 3._WP
+            END IF
+        END DO
+        !$ACC END LOOP
+
 !!PS         if (nzmin>15 .and. mype==0) then 
 !!PS             write(*,*) ' tr_arr(:,node,1) = ',tr_arr(:,node,1)
 !!PS             write(*,*)
 !!PS             write(*,*) ' tr_arr(:,node,2) = ',tr_arr(:,node,2)
 !!PS         end if 
     end do
+    !$ACC END PARALLEL LOOP
 end subroutine solve_tracers_ale
 !
 !
