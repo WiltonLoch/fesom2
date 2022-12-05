@@ -28,22 +28,37 @@ type com_struct
      integer                                       :: nreq   ! number of requests for MPI_Wait
                                                              ! (to combine halo exchange of several fields)
      contains
-#if defined(__PGI)
-     private
-#endif
-     procedure WRITE_T_COM_STRUCT
      procedure READ_T_COM_STRUCT
-     generic :: write(unformatted) => WRITE_T_COM_STRUCT
-     generic :: read(unformatted)  =>  READ_T_COM_STRUCT
+     procedure WRITE_T_COM_STRUCT
 end type com_struct
 
 TYPE T_PARTIT
-  integer              :: MPI_COMM_FESOM ! FESOM communicator (for ocean only runs if often a copy of MPI_COMM_WORLD)
 
   type(com_struct) :: com_nod2D
   type(com_struct) :: com_elem2D
   type(com_struct) :: com_elem2D_full
- 
+
+  integer              :: npes
+  integer              :: mype
+  integer              :: maxPEnum=100
+  integer, allocatable, dimension(:)  :: part
+
+  integer                             :: myDim_nod2D
+  integer                             :: eDim_nod2D
+  integer, allocatable, dimension(:)  :: myList_nod2D
+
+  integer                             :: myDim_elem2D
+  integer                             :: eDim_elem2D
+  integer                             :: eXDim_elem2D
+  integer, allocatable, dimension(:)  :: myList_elem2D
+
+  integer                             :: myDim_edge2D
+  integer                             :: eDim_edge2D
+  integer, allocatable, dimension(:)  :: myList_edge2D
+  integer :: pe_status = 0 ! if /=0 then something is wrong
+
+  integer              :: MPI_COMM_FESOM ! FESOM communicator (for ocean only runs if often a copy of MPI_COMM_WORLD)
+
   ! MPI Datatypes for interface exchange
   ! Element fields (2D; 2D integer; 3D with nl-1 or nl levels, 1 - 4 values)
   !                 small halo and / or full halo
@@ -59,22 +74,7 @@ TYPE T_PARTIT
   integer, allocatable       :: s_mpitype_nod2D_i(:),   r_mpitype_nod2D_i(:)
   integer, allocatable       :: s_mpitype_nod3D(:,:,:), r_mpitype_nod3D(:,:,:) 
 
-  ! general MPI part
   integer            :: MPIERR
-  integer            :: npes
-  integer            :: mype
-  integer            :: maxPEnum=100
-  integer, allocatable, dimension(:)  :: part
-
-  ! Mesh partition
-  integer                             :: myDim_nod2D, eDim_nod2D
-  integer, allocatable, dimension(:)  :: myList_nod2D
-  integer                             :: myDim_elem2D, eDim_elem2D, eXDim_elem2D
-  integer, allocatable, dimension(:)  :: myList_elem2D
-  integer                             :: myDim_edge2D, eDim_edge2D
-  integer, allocatable, dimension(:)  :: myList_edge2D
-
-  integer :: pe_status = 0 ! if /=0 then something is wrong 
   !!! remPtr_* are constructed during the runtime and shall not be dumped!!!
   integer, allocatable ::  remPtr_nod2D(:),  remList_nod2D(:)
   integer, allocatable ::  remPtr_elem2D(:), remList_elem2D(:)
@@ -84,24 +84,27 @@ TYPE T_PARTIT
   !!! plock is constructed during the runtime and shall not be dumped!!!
     integer(omp_lock_kind), allocatable :: plock(:)
 #endif
+
   contains
 #if defined(__PGI)
-  private
-#endif          
+  procedure,private  READ_T_PARTIT
+  procedure,private  WRITE_T_PARTIT
+#else
+  procedure READ_T_PARTIT
   procedure WRITE_T_PARTIT
-  procedure  READ_T_PARTIT
-  generic :: write(unformatted) => WRITE_T_PARTIT
+#endif
   generic :: read(unformatted)  =>  READ_T_PARTIT
+  generic :: write(unformatted) =>  WRITE_T_PARTIT
 END TYPE T_PARTIT
 contains
 
 ! Unformatted writing for COM_STRUCT TYPE
-subroutine WRITE_T_COM_STRUCT(tstruct, unit, iostat, iomsg)
+subroutine WRITE_T_COM_STRUCT(tstruct, unit)
     IMPLICIT NONE
     class(COM_STRUCT),    intent(in)     :: tstruct
     integer,              intent(in)     :: unit
-    integer,              intent(out)    :: iostat
-    character(*),         intent(inout)  :: iomsg
+    integer                              :: iostat
+    character(len=1024)                  :: iomsg
 
     write(unit, iostat=iostat, iomsg=iomsg) tstruct%rPEnum
     call write1d_int_static(tstruct%rPE,   unit, iostat, iomsg)
@@ -116,12 +119,12 @@ subroutine WRITE_T_COM_STRUCT(tstruct, unit, iostat, iomsg)
     write(unit, iostat=iostat, iomsg=iomsg) tstruct%nreq
 end subroutine WRITE_T_COM_STRUCT
 
-subroutine READ_T_COM_STRUCT(tstruct, unit, iostat, iomsg)
+subroutine READ_T_COM_STRUCT(tstruct, unit)
     IMPLICIT NONE
     class(COM_STRUCT),    intent(inout)  :: tstruct
     integer,              intent(in)     :: unit
-    integer,              intent(out)    :: iostat
-    character(*),         intent(inout)  :: iomsg
+    integer                              :: iostat
+    character(len=1024)                  :: iomsg
 
     read(unit, iostat=iostat, iomsg=iomsg) tstruct%rPEnum
     call read1d_int_static(tstruct%rPE,   unit, iostat, iomsg)
@@ -144,9 +147,9 @@ subroutine WRITE_T_PARTIT(partit, unit, iostat, iomsg)
     integer,              intent(out)    :: iostat
     character(*),         intent(inout)  :: iomsg
 
-    write(unit, iostat=iostat, iomsg=iomsg) partit%com_nod2D
-    write(unit, iostat=iostat, iomsg=iomsg) partit%com_elem2D
-    write(unit, iostat=iostat, iomsg=iomsg) partit%com_elem2D_full
+    call partit%com_nod2D%WRITE_T_COM_STRUCT(unit)
+    call partit%com_elem2D%WRITE_T_COM_STRUCT(unit)
+    call partit%com_elem2D_full%WRITE_T_COM_STRUCT(unit)
 
     write(unit, iostat=iostat, iomsg=iomsg) partit%npes
     write(unit, iostat=iostat, iomsg=iomsg) partit%mype
@@ -175,9 +178,9 @@ subroutine READ_T_PARTIT(partit, unit, iostat, iomsg)
     integer,              intent(out)    :: iostat
     character(*),         intent(inout)  :: iomsg
 
-    read(unit, iostat=iostat, iomsg=iomsg) partit%com_nod2D
-    read(unit, iostat=iostat, iomsg=iomsg) partit%com_elem2D
-    read(unit, iostat=iostat, iomsg=iomsg) partit%com_elem2D_full
+    call partit%com_nod2D%READ_T_COM_STRUCT(unit)
+    call partit%com_elem2D%READ_T_COM_STRUCT(unit)
+    call partit%com_elem2D_full%READ_T_COM_STRUCT(unit)
 
     read(unit, iostat=iostat, iomsg=iomsg) partit%npes
     read(unit, iostat=iostat, iomsg=iomsg) partit%mype
