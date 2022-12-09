@@ -1,5 +1,5 @@
 !==========================================================
-! Variables to organize parallel work  
+! Variables to organize parallel work
 module MOD_PARTIT
 USE O_PARAM
 USE, intrinsic :: ISO_FORTRAN_ENV
@@ -16,11 +16,11 @@ integer, parameter   :: MAX_NEIGHBOR_PARTITIONS=32
 
 
 type com_struct
-     integer                                       :: rPEnum ! the number of PE I receive info from 
+     integer                                       :: rPEnum ! the number of PE I receive info from
      integer, dimension(MAX_NEIGHBOR_PARTITIONS)   :: rPE    ! their list
      integer, dimension(MAX_NEIGHBOR_PARTITIONS+1) :: rptr   ! allocatables to the list of nodes
      integer, dimension(:), allocatable            :: rlist  ! the list of nodes
-     integer                                       :: sPEnum ! send part 
+     integer                                       :: sPEnum ! send part
      integer, dimension(MAX_NEIGHBOR_PARTITIONS)   :: sPE
      integer, dimension(MAX_NEIGHBOR_PARTITIONS)   :: sptr
      integer, dimension(:), allocatable            :: slist
@@ -63,16 +63,16 @@ TYPE T_PARTIT
   ! Element fields (2D; 2D integer; 3D with nl-1 or nl levels, 1 - 4 values)
   !                 small halo and / or full halo
   !!! s(r)_mpitype_* are constructed during the runtime ans shall not be dumped!!!
-  integer, allocatable :: s_mpitype_elem2D(:,:),       r_mpitype_elem2D(:,:) 
-  integer, allocatable :: s_mpitype_elem2D_full_i(:),  r_mpitype_elem2D_full_i(:) 
-  integer, allocatable :: s_mpitype_elem2D_full(:,:),  r_mpitype_elem2D_full(:,:) 
-  integer, allocatable :: s_mpitype_elem3D(:,:,:),     r_mpitype_elem3D(:,:,:) 
-  integer, allocatable :: s_mpitype_elem3D_full(:,:,:),r_mpitype_elem3D_full(:,:,:) 
+  integer, allocatable :: s_mpitype_elem2D(:,:),       r_mpitype_elem2D(:,:)
+  integer, allocatable :: s_mpitype_elem2D_full_i(:),  r_mpitype_elem2D_full_i(:)
+  integer, allocatable :: s_mpitype_elem2D_full(:,:),  r_mpitype_elem2D_full(:,:)
+  integer, allocatable :: s_mpitype_elem3D(:,:,:),     r_mpitype_elem3D(:,:,:)
+  integer, allocatable :: s_mpitype_elem3D_full(:,:,:),r_mpitype_elem3D_full(:,:,:)
 
   ! Nodal fields (2D; 2D integer; 3D with nl-1 or nl levels, one, two, or three values)
-  integer, allocatable       :: s_mpitype_nod2D(:),     r_mpitype_nod2D(:) 
+  integer, allocatable       :: s_mpitype_nod2D(:),     r_mpitype_nod2D(:)
   integer, allocatable       :: s_mpitype_nod2D_i(:),   r_mpitype_nod2D_i(:)
-  integer, allocatable       :: s_mpitype_nod3D(:,:,:), r_mpitype_nod3D(:,:,:) 
+  integer, allocatable       :: s_mpitype_nod3D(:,:,:), r_mpitype_nod3D(:,:,:)
 
   integer            :: MPIERR
   !!! remPtr_* are constructed during the runtime and shall not be dumped!!!
@@ -114,7 +114,7 @@ subroutine WRITE_T_COM_STRUCT(tstruct, unit)
     call write1d_int_static(tstruct%sPE,   unit, iostat, iomsg)
     call write1d_int_static(tstruct%sptr,  unit, iostat, iomsg)
     call write_bin_array(tstruct%slist, unit, iostat, iomsg)
-    ! req is constructed during the runtime 
+    ! req is constructed during the runtime
     ! call write_bin_array(tstruct%req,   unit, iostat, iomsg)
     write(unit, iostat=iostat, iomsg=iomsg) tstruct%nreq
 end subroutine WRITE_T_COM_STRUCT
@@ -134,7 +134,7 @@ subroutine READ_T_COM_STRUCT(tstruct, unit)
     call read1d_int_static(tstruct%sPE,   unit, iostat, iomsg)
     call read1d_int_static(tstruct%sptr,  unit, iostat, iomsg)
     call read_bin_array(tstruct%slist, unit, iostat, iomsg)
-!   req is constructed during the runtime 
+!   req is constructed during the runtime
 !   call read_bin_array(tstruct%req,   unit, iostat, iomsg)
     read(unit, iostat=iostat, iomsg=iomsg) tstruct%nreq
 end subroutine READ_T_COM_STRUCT
