@@ -46,7 +46,6 @@ elseif(${CMAKE_Fortran_COMPILER_ID} STREQUAL PGI OR ${CMAKE_Fortran_COMPILER_ID}
    endif()
 endif()
 
-target_link_libraries(${PROJECT_NAME} nvhpcwrapnvtx)
 
 set(FESOM_INSTALL_FILEPATH "${CMAKE_CURRENT_LIST_DIR}/../bin/fdiff" CACHE FILEPATH "file path where the FESOM binary should be put")
 get_filename_component(FESOM_INSTALL_PATH ${FESOM_INSTALL_FILEPATH} DIRECTORY)

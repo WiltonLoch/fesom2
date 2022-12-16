@@ -23,8 +23,8 @@ end subroutine darray_set_tolerance
 
 subroutine diff_array1D_wp(fileunit, a, b, vname)
     integer, intent(in)                                       :: fileunit
-    real(kind=WP), intent(inout), allocatable, dimension(:)   :: a
-    real(kind=WP), intent(inout), allocatable, dimension(:)   :: b
+    real(kind=WP), intent(in), allocatable, dimension(:)   :: a
+    real(kind=WP), intent(in), allocatable, dimension(:)   :: b
     character(LEN=*), intent(in)                              :: vname
 
     integer, dimension(1)                                     :: sa, sb
@@ -34,8 +34,8 @@ end subroutine diff_array1D_wp
 
 subroutine diff_array2D_wp(fileunit, a, b, vname)
     integer, intent(in)                                       :: fileunit
-    real(kind=WP), intent(inout), allocatable, dimension(:,:) :: a
-    real(kind=WP), intent(inout), allocatable, dimension(:,:) :: b
+    real(kind=WP), intent(in), allocatable, dimension(:,:) :: a
+    real(kind=WP), intent(in), allocatable, dimension(:,:) :: b
     character(LEN=*), intent(in)                              :: vname
 
     integer, dimension(2)                                     :: sa, sb
@@ -60,8 +60,8 @@ end subroutine diff_array2D_wp
 
 subroutine diff_array3D_wp(fileunit, a, b, vname)
     integer, intent(in)                                         :: fileunit
-    real(kind=WP), intent(inout), allocatable, dimension(:,:,:) :: a
-    real(kind=WP), intent(inout), allocatable, dimension(:,:,:) :: b
+    real(kind=WP), intent(in), allocatable, dimension(:,:,:) :: a
+    real(kind=WP), intent(in), allocatable, dimension(:,:,:) :: b
     character(LEN=*), intent(in)                                :: vname
 
     integer, dimension(3)                                       :: sa, sb
