@@ -118,8 +118,6 @@ select case(trim(dtype))
         call read_all_bin_restarts(npepath1, partit=partit, mesh=mesh, ice=ice1)
         call read_all_bin_restarts(npepath2, partit=partit, mesh=mesh, ice=ice2)
         call dderived_type(partit, ice1, ice2, wtol)
-        if (partit%mype==0) print *, "Unsupported derived data type"
-        call par_ex(partit%MPI_COMM_FESOM, partit%mype)
 
     case default
         if (partit%mype==0) print *, "Wrong type argument"
