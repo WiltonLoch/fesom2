@@ -111,8 +111,6 @@ select case(trim(dtype))
         call read_all_bin_restarts(npepath1, partit=partit, mesh=mesh, dynamics=dyn1)
         call read_all_bin_restarts(npepath2, partit=partit, mesh=mesh, dynamics=dyn2)
         call dderived_type(partit, dyn1, dyn2, wtol)
-        if (partit%mype==0) print *, "Unsupported derived data type"
-        call par_ex(partit%MPI_COMM_FESOM, partit%mype)
 
     case("ice")
         call read_all_bin_restarts(npepath1, partit=partit, mesh=mesh, ice=ice1)
