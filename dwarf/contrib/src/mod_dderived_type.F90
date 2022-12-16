@@ -136,6 +136,120 @@ subroutine dderived_type_dynamics(partit, dyn1, dyn2, wtol)
          file     = "output/d_dyn."//mpirank_to_txt(partit%MPI_COMM_FESOM), &
          status   = 'replace')
 
+    call diff_array(fileunit, &
+                    dyn1%uv,  &
+                    dyn2%uv,  &
+                    "dyn_uv")
+
+    call diff_array(fileunit,    &
+                    dyn1%uv_rhs, &
+                    dyn2%uv_rhs, &
+                    "dyn_uv_rhs")
+
+    call diff_array(fileunit,      &
+                    dyn1%uv_rhsAB, &
+                    dyn2%uv_rhsAB, &
+                    "dyn_uv_rhsAB")
+
+    call diff_array(fileunit,    &
+                    dyn1%fer_uv, &
+                    dyn2%fer_uv, &
+                    "dyn_fer_uv")
+
+    call diff_array(fileunit,    &
+                    dyn1%uvnode, &
+                    dyn2%uvnode, &
+                    "dyn_uvnode")
+
+    call diff_array(fileunit, &
+                    dyn1%w,   &
+                    dyn2%w,   &
+                    "dyn_w")
+
+    call diff_array(fileunit, &
+                    dyn1%w_e, &
+                    dyn2%w_e, &
+                    "dyn_w_e")
+
+    call diff_array(fileunit, &
+                    dyn1%w_i, &
+                    dyn2%w_i, &
+                    "dyn_w_i")
+
+    call diff_array(fileunit,   &
+                    dyn1%cfl_z, &
+                    dyn2%cfl_z, &
+                    "dyn_cfl_z")
+
+    call diff_array(fileunit,   &
+                    dyn1%fer_w, &
+                    dyn2%fer_w, &
+                    "dyn_fer_w")
+
+    call diff_array(fileunit,   &
+                    dyn1%eta_n, &
+                    dyn2%eta_n, &
+                    "dyn_eta_n")
+
+    call diff_array(fileunit,   &
+                    dyn1%d_eta, &
+                    dyn2%d_eta, &
+                    "dyn_d_eta")
+
+    call diff_array(fileunit,     &
+                    dyn1%ssh_rhs, &
+                    dyn2%ssh_rhs, &
+                    "dyn_ssh_rhs")
+
+    call diff_array(fileunit,         &
+                    dyn1%ssh_rhs_old, &
+                    dyn2%ssh_rhs_old, &
+                    "dyn_ssh_rhs_old")
+
+    call diff_array(fileunit,           &
+                    dyn1%solverinfo%rr, &
+                    dyn2%solverinfo%rr, &
+                    "dyn_solverinfo_rr")
+
+    call diff_array(fileunit,           &
+                    dyn1%solverinfo%zz, &
+                    dyn2%solverinfo%zz, &
+                    "dyn_solverinfo_zz")
+
+    call diff_array(fileunit,           &
+                    dyn1%solverinfo%pp, &
+                    dyn2%solverinfo%pp, &
+                    "dyn_solverinfo_pp")
+
+    call diff_array(fileunit,            &
+                    dyn1%solverinfo%App, &
+                    dyn2%solverinfo%App, &
+                    "dyn_solverinfo_App")
+
+    call diff_array(fileunit,             &
+                    dyn1%work%uvnode_rhs, &
+                    dyn2%work%uvnode_rhs, &
+                    "dyn_work_uvnode_rhs")
+
+    call diff_array(fileunit,      &
+                    dyn1%work%u_c, &
+                    dyn2%work%u_c, &
+                    "dyn_work_u_c")
+
+    call diff_array(fileunit,      &
+                    dyn1%work%v_c, &
+                    dyn2%work%v_c, &
+                    "dyn_work_v_c")
+
+    call diff_array(fileunit,      &
+                    dyn1%work%u_b, &
+                    dyn2%work%u_b, &
+                    "dyn_work_u_b")
+
+    call diff_array(fileunit,      &
+                    dyn1%work%v_b, &
+                    dyn2%work%v_b, &
+                    "dyn_work_v_b")
 
     close(fileunit)
 
@@ -156,273 +270,273 @@ subroutine dderived_type_ice(partit, ice1, ice2, wtol)
          file     = "output/d_ice."//mpirank_to_txt(partit%MPI_COMM_FESOM), &
          status   = 'replace')
 
-    call diff_array(fileunit,                       &
+    call diff_array(fileunit,   &
                     ice1%uice,  &
                     ice2%uice,  &
                     "ice_uice")
 
-    call diff_array(fileunit,                       &
-                    ice1%uice_rhs,  &
-                    ice2%uice_rhs,  &
+    call diff_array(fileunit,      &
+                    ice1%uice_rhs, &
+                    ice2%uice_rhs, &
                     "ice_uice_rhs")
 
-    call diff_array(fileunit,                       &
-                    ice1%uice_old,  &
-                    ice2%uice_old,  &
+    call diff_array(fileunit,      &
+                    ice1%uice_old, &
+                    ice2%uice_old, &
                     "ice_uice_old")
 
-    call diff_array(fileunit,                       &
-                    ice1%uice_aux,  &
-                    ice2%uice_aux,  &
+    call diff_array(fileunit,      &
+                    ice1%uice_aux, &
+                    ice2%uice_aux, &
                     "ice_uice_aux")
 
-    call diff_array(fileunit,                       &
-                    ice1%vice,  &
-                    ice2%vice,  &
+    call diff_array(fileunit,  &
+                    ice1%vice, &
+                    ice2%vice, &
                     "ice_vice")
 
-    call diff_array(fileunit,                       &
-                    ice1%vice_rhs,  &
-                    ice2%vice_rhs,  &
+    call diff_array(fileunit,      &
+                    ice1%vice_rhs, &
+                    ice2%vice_rhs, &
                     "ice_vice_rhs")
 
-    call diff_array(fileunit,                       &
-                    ice1%vice_old,  &
-                    ice2%vice_old,  &
+    call diff_array(fileunit,      &
+                    ice1%vice_old, &
+                    ice2%vice_old, &
                     "ice_vice_old")
 
-    call diff_array(fileunit,                       &
-                    ice1%vice_aux,  &
-                    ice2%vice_aux,  &
+    call diff_array(fileunit,      &
+                    ice1%vice_aux, &
+                    ice2%vice_aux, &
                     "ice_vice_aux")
 
-    call diff_array(fileunit,                       &
-                    ice1%stress_atmice_x,  &
-                    ice2%stress_atmice_x,  &
+    call diff_array(fileunit,             &
+                    ice1%stress_atmice_x, &
+                    ice2%stress_atmice_x, &
                     "ice_stress_atmice_x")
 
-    call diff_array(fileunit,                       &
-                    ice1%stress_iceoce_x,  &
-                    ice2%stress_iceoce_x,  &
+    call diff_array(fileunit,             &
+                    ice1%stress_iceoce_x, &
+                    ice2%stress_iceoce_x, &
                     "ice_stress_iceoce_x")
 
-    call diff_array(fileunit,                       &
-                    ice1%stress_atmice_y,  &
-                    ice2%stress_atmice_y,  &
+    call diff_array(fileunit,             &
+                    ice1%stress_atmice_y, &
+                    ice2%stress_atmice_y, &
                     "ice_stress_atmice_y")
 
-    call diff_array(fileunit,                       &
-                    ice1%stress_iceoce_y,  &
-                    ice2%stress_iceoce_y,  &
+    call diff_array(fileunit,             &
+                    ice1%stress_iceoce_y, &
+                    ice2%stress_iceoce_y, &
                     "ice_stress_iceoce_y")
 
-    call diff_array(fileunit,                       &
-                    ice1%srfoce_temp,  &
-                    ice2%srfoce_temp,  &
+    call diff_array(fileunit,         &
+                    ice1%srfoce_temp, &
+                    ice2%srfoce_temp, &
                     "ice_srfoce_temp")
 
-    call diff_array(fileunit,                       &
-                    ice1%srfoce_salt,  &
-                    ice2%srfoce_salt,  &
+    call diff_array(fileunit,         &
+                    ice1%srfoce_salt, &
+                    ice2%srfoce_salt, &
                     "ice_srfoce_salt")
 
-    call diff_array(fileunit,                       &
-                    ice1%srfoce_ssh,  &
-                    ice2%srfoce_ssh,  &
+    call diff_array(fileunit,        &
+                    ice1%srfoce_ssh, &
+                    ice2%srfoce_ssh, &
                     "ice_srfoce_ssh")
 
-    call diff_array(fileunit,                       &
-                    ice1%srfoce_u,  &
-                    ice2%srfoce_u,  &
+    call diff_array(fileunit,      &
+                    ice1%srfoce_u, &
+                    ice2%srfoce_u, &
                     "ice_srfoce_u")
 
-    call diff_array(fileunit,                       &
-                    ice1%srfoce_v,  &
-                    ice2%srfoce_v,  &
+    call diff_array(fileunit,      &
+                    ice1%srfoce_v, &
+                    ice2%srfoce_v, &
                     "ice_srfoce_v")
 
-    call diff_array(fileunit,                       &
-                    ice1%flx_fw,  &
-                    ice2%flx_fw,  &
+    call diff_array(fileunit,    &
+                    ice1%flx_fw, &
+                    ice2%flx_fw, &
                     "ice_flx_fw")
 
-    call diff_array(fileunit,                       &
-                    ice1%flx_h,  &
-                    ice2%flx_h,  &
+    call diff_array(fileunit,   &
+                    ice1%flx_h, &
+                    ice2%flx_h, &
                     "ice_flx_h")
 
-    call diff_array(fileunit,                       &
-                    ice1%alpha_evp_array,  &
-                    ice2%alpha_evp_array,  &
+    call diff_array(fileunit,             &
+                    ice1%alpha_evp_array, &
+                    ice2%alpha_evp_array, &
                     "ice_alpha_evp_array")
 
-    call diff_array(fileunit,                       &
-                    ice1%beta_evp_array,  &
-                    ice2%beta_evp_array,  &
+    call diff_array(fileunit,            &
+                    ice1%beta_evp_array, &
+                    ice2%beta_evp_array, &
                     "ice_beta_evp_array")
 
     do i=1,size(ice1%data)
-           call diff_array(fileunit,                       &
-                           ice1%data(i)%values,  &
-                           ice2%data(i)%values,  &
+           call diff_array(fileunit,                            &
+                           ice1%data(i)%values,                 &
+                           ice2%data(i)%values,                 &
                            "ice_data_"//int_to_txt(i)//"_values") 
 
-           call diff_array(fileunit,                       &
-                           ice1%data(i)%values_old,  &
-                           ice2%data(i)%values_old,  &
+           call diff_array(fileunit,                                &
+                           ice1%data(i)%values_old,                 &
+                           ice2%data(i)%values_old,                 &
                            "ice_data_"//int_to_txt(i)//"_values_old")
 
-           call diff_array(fileunit,                       &
-                           ice1%data(i)%values_rhs,  &
-                           ice2%data(i)%values_rhs,  &
+           call diff_array(fileunit,                                &
+                           ice1%data(i)%values_rhs,                 &
+                           ice2%data(i)%values_rhs,                 &
                            "ice_data_"//int_to_txt(i)//"_values_rhs")
 
-           call diff_array(fileunit,                       &
-                           ice1%data(i)%values_div_rhs,  &
-                           ice2%data(i)%values_div_rhs,  &
+           call diff_array(fileunit,                                    &
+                           ice1%data(i)%values_div_rhs,                 &
+                           ice2%data(i)%values_div_rhs,                 &
                            "ice_data_"//int_to_txt(i)//"_values_div_rhs")
 
-           call diff_array(fileunit,                       &
-                           ice1%data(i)%dvalues,  &
-                           ice2%data(i)%dvalues,  &
+           call diff_array(fileunit,                             &
+                           ice1%data(i)%dvalues,                 &
+                           ice2%data(i)%dvalues,                 &
                            "ice_data_"//int_to_txt(i)//"_dvalues")
 
-           call diff_array(fileunit,                       &
-                           ice1%data(i)%valuesl,  &
-                           ice2%data(i)%valuesl,  &
+           call diff_array(fileunit,                             &
+                           ice1%data(i)%valuesl,                 &
+                           ice2%data(i)%valuesl,                 &
                            "ice_data_"//int_to_txt(i)//"_valuesl")
     end do
 
-    call diff_array(fileunit,                       &
-                    ice1%work%fct_tmax,  &
-                    ice2%work%fct_tmax,  &
+    call diff_array(fileunit,           &
+                    ice1%work%fct_tmax, &
+                    ice2%work%fct_tmax, &
                     "ice_work_fct_tmax")
 
-    call diff_array(fileunit,                       &
-                    ice1%work%fct_tmin,  &
-                    ice2%work%fct_tmin,  &
+    call diff_array(fileunit,           &
+                    ice1%work%fct_tmin, &
+                    ice2%work%fct_tmin, &
                     "ice_work_fct_tmin")
 
-    call diff_array(fileunit,                       &
-                    ice1%work%fct_plus,  &
-                    ice2%work%fct_plus,  &
+    call diff_array(fileunit,           &
+                    ice1%work%fct_plus, &
+                    ice2%work%fct_plus, &
                     "ice_work_fct_plus")
 
-    call diff_array(fileunit,                       &
-                    ice1%work%fct_minus,  &
-                    ice2%work%fct_minus,  &
+    call diff_array(fileunit,            &
+                    ice1%work%fct_minus, &
+                    ice2%work%fct_minus, &
                     "ice_work_fct_minus")
 
-    call diff_array(fileunit,                       &
-                    ice1%work%fct_fluxes,  &
-                    ice2%work%fct_fluxes,  &
+    call diff_array(fileunit,             &
+                    ice1%work%fct_fluxes, &
+                    ice2%work%fct_fluxes, &
                     "ice_work_fct_fluxes")
 
-    call diff_array(fileunit,                       &
-                    ice1%work%fct_massmatrix,  &
-                    ice2%work%fct_massmatrix,  &
+    call diff_array(fileunit,                 &
+                    ice1%work%fct_massmatrix, &
+                    ice2%work%fct_massmatrix, &
                     "ice_work_fct_massmatrix")
 
-    call diff_array(fileunit,                       &
-                    ice1%work%sigma11,  &
-                    ice2%work%sigma11,  &
+    call diff_array(fileunit,          &
+                    ice1%work%sigma11, &
+                    ice2%work%sigma11, &
                     "ice_work_sigma11")
 
-    call diff_array(fileunit,                       &
-                    ice1%work%sigma12,  &
-                    ice2%work%sigma12,  &
+    call diff_array(fileunit,          &
+                    ice1%work%sigma12, &
+                    ice2%work%sigma12, &
                     "ice_work_sigma12")
 
-    call diff_array(fileunit,                       &
-                    ice1%work%sigma22,  &
-                    ice2%work%sigma22,  &
+    call diff_array(fileunit,          &
+                    ice1%work%sigma22, &
+                    ice2%work%sigma22, &
                     "ice_work_sigma22")
 
-    call diff_array(fileunit,                       &
-                    ice1%work%eps11,  &
-                    ice2%work%eps11,  &
+    call diff_array(fileunit,        &
+                    ice1%work%eps11, &
+                    ice2%work%eps11, &
                     "ice_work_eps11")
 
-    call diff_array(fileunit,                       &
-                    ice1%work%eps12,  &
-                    ice2%work%eps12,  &
+    call diff_array(fileunit,        &
+                    ice1%work%eps12, &
+                    ice2%work%eps12, &
                     "ice_work_eps12")
 
-    call diff_array(fileunit,                       &
-                    ice1%work%eps22,  &
-                    ice2%work%eps22,  &
+    call diff_array(fileunit,        &
+                    ice1%work%eps22, &
+                    ice2%work%eps22, &
                     "ice_work_eps22")
 
-    call diff_array(fileunit,                       &
-                    ice1%work%ice_strength,  &
-                    ice2%work%ice_strength,  &
+    call diff_array(fileunit,               &
+                    ice1%work%ice_strength, &
+                    ice2%work%ice_strength, &
                     "ice_work_ice_strength")
 
-    call diff_array(fileunit,                       &
-                    ice1%work%inv_areamass,  &
-                    ice2%work%inv_areamass,  &
+    call diff_array(fileunit,               &
+                    ice1%work%inv_areamass, &
+                    ice2%work%inv_areamass, &
                     "ice_work_inv_areamass")
 
-    call diff_array(fileunit,                       &
-                    ice1%work%inv_mass,  &
-                    ice2%work%inv_mass,  &
+    call diff_array(fileunit,           &
+                    ice1%work%inv_mass, &
+                    ice2%work%inv_mass, &
                     "ice_work_inv_mass")
 
-    call diff_array(fileunit,                       &
-                    ice1%thermo%t_skin,  &
-                    ice2%thermo%t_skin,  &
+    call diff_array(fileunit,           &
+                    ice1%thermo%t_skin, &
+                    ice2%thermo%t_skin, &
                     "ice_thermo_t_skin")
 
-    call diff_array(fileunit,                       &
-                    ice1%thermo%thdgr,  &
-                    ice2%thermo%thdgr,  &
+    call diff_array(fileunit,          &
+                    ice1%thermo%thdgr, &
+                    ice2%thermo%thdgr, &
                     "ice_thermo_thdgr")
 
-    call diff_array(fileunit,                       &
-                    ice1%thermo%thdgrsn,  &
-                    ice2%thermo%thdgrsn,  &
+    call diff_array(fileunit,            &
+                    ice1%thermo%thdgrsn, &
+                    ice2%thermo%thdgrsn, &
                     "ice_thermo_thdgrsn")
 
-    call diff_array(fileunit,                       &
-                    ice1%thermo%thdgr_old,  &
-                    ice2%thermo%thdgr_old,  &
+    call diff_array(fileunit,              &
+                    ice1%thermo%thdgr_old, &
+                    ice2%thermo%thdgr_old, &
                     "ice_thermo_thdgr_old")
 
-    call diff_array(fileunit,                       &
-                    ice1%thermo%ustar,  &
-                    ice2%thermo%ustar,  &
+    call diff_array(fileunit,          &
+                    ice1%thermo%ustar, &
+                    ice2%thermo%ustar, &
                     "ice_thermo_ustar")
 
 #if defined (__oasis) || defined (__ifsinterface)
-    call diff_array(fileunit,                       &
-                    ice1%atmcoupl%oce_flx_h,  &
-                    ice2%atmcoupl%oce_flx_h,  &
+    call diff_array(fileunit,                &
+                    ice1%atmcoupl%oce_flx_h, &
+                    ice2%atmcoupl%oce_flx_h, &
                     "ice_atmcoupl_oce_flx_h")
 
-    call diff_array(fileunit,                       &
-                    ice1%atmcoupl%ice_flx_h,  &
-                    ice2%atmcoupl%ice_flx_h,  &
+    call diff_array(fileunit,                &
+                    ice1%atmcoupl%ice_flx_h, &
+                    ice2%atmcoupl%ice_flx_h, &
                     "ice_atmcoupl_ice_flx_h")
 
-    call diff_array(fileunit,                       &
-                    ice1%atmcoupl%tmpoce_flx_h,  &
-                    ice2%atmcoupl%tmpoce_flx_h,  &
+    call diff_array(fileunit,                   &
+                    ice1%atmcoupl%tmpoce_flx_h, &
+                    ice2%atmcoupl%tmpoce_flx_h, &
                     "ice_atmcoupl_tmpoce_flx_h")
 
-    call diff_array(fileunit,                       &
-                    ice1%atmcoupl%tmpice_flx_h,  &
-                    ice2%atmcoupl%tmpice_flx_h,  &
+    call diff_array(fileunit,                   &
+                    ice1%atmcoupl%tmpice_flx_h, &
+                    ice2%atmcoupl%tmpice_flx_h, &
                     "ice_atmcoupl_tmpice_flx_h")
 
 #if defined (__oifs) || defined (__ifsinterface)
-        call diff_array(fileunit,                       &
-                    ice1%atmcoupl%ice_alb,  &
-                    ice2%atmcoupl%ice_alb,  &
+        call diff_array(fileunit,          &
+                    ice1%atmcoupl%ice_alb, &
+                    ice2%atmcoupl%ice_alb, &
                     "ice_atmcoupl_ice_alb")
 
-        call diff_array(fileunit,                       &
-                    ice1%atmcoupl%enthalpyoffuse,  &
-                    ice2%atmcoupl%enthalpyoffuse,  &
+        call diff_array(fileunit,                 &
+                    ice1%atmcoupl%enthalpyoffuse, &
+                    ice2%atmcoupl%enthalpyoffuse, &
                     "ice_atmcoupl_enthalpyoffuse")
 #endif
 #endif
