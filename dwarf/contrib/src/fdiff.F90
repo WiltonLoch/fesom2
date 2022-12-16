@@ -115,6 +115,10 @@ select case(trim(dtype))
     case("ice")
         call read_all_bin_restarts(npepath1, partit=partit, mesh=mesh, ice=ice1)
         call read_all_bin_restarts(npepath2, partit=partit, mesh=mesh, ice=ice2)
+        if (size(ice1%data) .ne. size(ice2%data)) then
+            if (partit%mype==0) print *, "Inconsistent number of tracers"
+            call par_ex(partit%MPI_COMM_FESOM, partit%mype)
+        end if
         call dderived_type(partit, ice1, ice2, wtol)
 
     case default
