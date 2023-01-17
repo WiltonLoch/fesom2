@@ -115,22 +115,6 @@ subroutine oce_tra_adv_fct(dt, ttf, lo, adf_h, adf_v, fct_ttf_min, fct_ttf_max, 
 
     !$ACC DATA CREATE(tvert_max, tvert_min)
 
-!$OMP DO
-    !$ACC PARALLEL LOOP GANG VECTOR COLLAPSE(2) DEFAULT(PRESENT) VECTOR_LENGTH(acc_vl)
-    do n=1,myDim_nod2D + edim_nod2d
-        do nz=1, nl
-            nu1 = ulevels_nod2D(n)
-            nl1 = nlevels_nod2D(n)
-            if(nu1 <= nz .and. nz < nl1) then
-                ! do nz=nu1, nl1-1
-                fct_ttf_max(nz,n)=max(LO(nz,n), ttf(nz,n))
-                fct_ttf_min(nz,n)=min(LO(nz,n), ttf(nz,n))
-                ! end do
-            end if
-        end do
-    end do
-    !$ACC END PARALLEL LOOP
-!$OMP END DO
     !___________________________________________________________________________
     ! a2. Admissible increments on elements
     !     (only layers below the first and above the last layer)
@@ -146,8 +130,14 @@ subroutine oce_tra_adv_fct(dt, ttf, lo, adf_h, adf_v, fct_ttf_min, fct_ttf_max, 
             if(nu1 <= nz) then
                 if(nz < nl1) then
                     ! do nz=nu1, nl1-1
-                    AUX(1,nz,elem)=max(fct_ttf_max(nz,enodes(1)), fct_ttf_max(nz,enodes(2)), fct_ttf_max(nz,enodes(3)))
-                    AUX(2,nz,elem)=min(fct_ttf_min(nz,enodes(1)), fct_ttf_min(nz,enodes(2)), fct_ttf_min(nz,enodes(3)))
+                    ! AUX(1,nz,elem)=max(fct_ttf_max(nz,enodes(1)), fct_ttf_max(nz,enodes(2)), fct_ttf_max(nz,enodes(3)))
+                    ! AUX(2,nz,elem)=min(fct_ttf_min(nz,enodes(1)), fct_ttf_min(nz,enodes(2)), fct_ttf_min(nz,enodes(3)))
+                    AUX(1,nz,elem)=max(ttf(nz,enodes(1)), LO(nz,enodes(1)), &
+                                       ttf(nz,enodes(2)), LO(nz,enodes(2)), &
+                                       ttf(nz,enodes(3)), LO(nz,enodes(3)))
+                    AUX(2,nz,elem)=min(ttf(nz,enodes(1)), LO(nz,enodes(1)), &
+                                       ttf(nz,enodes(2)), LO(nz,enodes(2)), &
+                                       ttf(nz,enodes(3)), LO(nz,enodes(3)))
                     ! end do
                 else
                     ! do nz=nl1,nl-1
@@ -201,10 +191,18 @@ subroutine oce_tra_adv_fct(dt, ttf, lo, adf_h, adf_v, fct_ttf_min, fct_ttf_max, 
         do nz=1, nl
             nu1 = ulevels_nod2D(n)
             nl1 = nlevels_nod2D(n)
+
+            if(n <= edim_nod2d + 1) then
+                if(ulevels_nod2D(myDim_nod2D + n - 1) <= nz .and. nz < nlevels_nod2D(myDim_nod2D + n - 1)) then
+                    fct_ttf_max(nz, myDim_nod2D + n - 1) = max( LO(nz, myDim_nod2D + n - 1), ttf(nz, myDim_nod2D + n - 1))
+                    fct_ttf_min(nz, myDim_nod2D + n - 1) = min( LO(nz, myDim_nod2D + n - 1), ttf(nz, myDim_nod2D + n - 1))
+                end if
+            end if
+
             !___________________________________________________________________
             ! calc max,min increment of surface layer with respect to low order
             ! solution
-            if (nu1 == nz) then
+            if (nu1 == nz .or. nz == nl1 - 1) then
                 fct_ttf_max(nz,n)=tvert_max(nz, n)-LO(nz,n)
                 fct_ttf_min(nz,n)=tvert_min(nz, n)-LO(nz,n)
             else if (nu1 < nz .and. nz < nl1 - 1) then
@@ -216,50 +214,22 @@ subroutine oce_tra_adv_fct(dt, ttf, lo, adf_h, adf_v, fct_ttf_min, fct_ttf_max, 
                 ! end do
                 ! calc max,min increment of bottom layer -1 with respect to low order
                 ! solution
-            else if (nz == nl1 - 1) then
-                ! nz=nl1-1
-                fct_ttf_max(nz,n)=tvert_max(nz, n)-LO(nz,n)
-                fct_ttf_min(nz,n)=tvert_min(nz, n)-LO(nz,n)
             end if
-        end do
-    end do
-    !$ACC END PARALLEL LOOP
-!$OMP END DO
-    !___________________________________________________________________________
-    ! b1. Split positive and negative antidiffusive contributions
-    ! --> sum all positive (fct_plus), negative (fct_minus) antidiffusive
-    !     horizontal element and vertical node contribution to node n and layer nz
-    !     see. R. Löhner et al. "finite element flux corrected transport (FEM-FCT)
-    !     for the euler and navier stoke equation
-!!$OMP DO
-    ! !$ACC PARALLEL LOOP GANG VECTOR COLLAPSE(2) DEFAULT(PRESENT) VECTOR_LENGTH(acc_vl)
-    ! do n=1, myDim_nod2D
-    !     do nz=1, nl
-    !         nu1 = ulevels_nod2D(n)
-    !         nl1 = nlevels_nod2D(n)
-    !         if(nu1 <= nz .and. nz < nl1) then
-    !             ! do nz=nu1,nl1-1
-    !             fct_plus(nz,n)=0._WP
-    !             fct_minus(nz,n)=0._WP
-    !             ! end do
-    !         end if
-    !     end do
-    ! end do
-    ! !$ACC END PARALLEL LOOP
-!!$OMP END DO
-    !Vertical
-!$OMP DO
-    !$ACC PARALLEL LOOP GANG VECTOR COLLAPSE(2) DEFAULT(PRESENT) VECTOR_LENGTH(acc_vl)
-    do n=1, myDim_nod2D
-        do nz=1, nl
-            nu1 = ulevels_nod2D(n)
-            nl1 = nlevels_nod2D(n)
+
+            !___________________________________________________________________________
+            ! b1. Split positive and negative antidiffusive contributions
+            ! --> sum all positive (fct_plus), negative (fct_minus) antidiffusive
+            !     horizontal element and vertical node contribution to node n and layer nz
+            !     see. R. Löhner et al. "finite element flux corrected transport (FEM-FCT)
+            !     for the euler and navier stoke equation
+            !Vertical
             if(nu1 <= nz .and. nz < nl1) then
                 ! do nz=nu1,nl1-1
                 fct_plus(nz,n)  = 0._WP + (max(0.0_WP,adf_v(nz,n)) + max(0.0_WP,-adf_v(nz+1,n)))
                 fct_minus(nz,n) = 0._WP + (min(0.0_WP,adf_v(nz,n)) + min(0.0_WP,-adf_v(nz+1,n)))
                 ! end do
             end if
+
         end do
     end do
     !$ACC END PARALLEL LOOP
