@@ -8,8 +8,8 @@ else()
    set(FESOM_PLATFORM_STRATEGY "notset" CACHE STRING "switch to platform specific compile settings, this is usually determined via the env.sh script")
 endif()
 
-option(ENABLE_OPENACC "compile with OpenACC support" ON)
-option(DISABLE_OPENACC_ATOMICS "disable kernels using atomic statement for reproducible results" OFF)
+option(ENABLE_OPENACC "compile with OpenACC support" OFF)
+option(DISABLE_OPENACC_ATOMICS "disable kernels using atomic statement for reproducible results" ON)
 option(ENABLE_NVTX "enable use of nvtx tools" OFF)
 
 option(DISABLE_MULTITHREADING "disable asynchronous operations" ON)
@@ -76,12 +76,14 @@ if(${VERBOSE})
    target_compile_definitions(${PROJECT_NAME} PRIVATE VERBOSE)
 endif()
 
+target_compile_definitions(${PROJECT_NAME} PRIVATE EDSL_CPU)
+
 set(CMAKE_VERBOSE_MAKEFILE ON)
 
 # CMAKE_Fortran_COMPILER_ID will also work if a wrapper is being used (e.g. mpif90 wraps ifort -> compiler id is Intel)
 if(${CMAKE_Fortran_COMPILER_ID} STREQUAL  Intel )
 #       target_compile_options(${PROJECT_NAME} PRIVATE -r8 -i4 -fp-model precise -no-prec-div -no-prec-sqrt -fimf-use-svml -xHost -ip -init=zero -no-wrap-margin)
-        target_compile_options(${PROJECT_NAME} PRIVATE 
+        target_compile_options(${PROJECT_NAME} PRIVATE
                                $<$<CONFIG:DEBUG>:-r8 -i4 -fp-model precise -no-prec-div -no-prec-sqrt -fimf-use-svml -xHost -ip -g -traceback -check all,noarg_temp_created,bounds,uninit>
                                $<$<CONFIG:RELEASE>:-r8 -i4 -fp-model precise -no-prec-div -no-prec-sqrt -fimf-use-svml -ip -g -traceback>
                               )
@@ -109,7 +111,7 @@ elseif(${CMAKE_Fortran_COMPILER_ID} STREQUAL PGI OR ${CMAKE_Fortran_COMPILER_ID}
           target_compile_definitions(${PROJECT_NAME} PRIVATE DISABLE_OPENACC_ATOMICS)
        endif()
    else()
-       target_compile_options(${PROJECT_NAME} PRIVATE 
+       target_compile_options(${PROJECT_NAME} PRIVATE
                               $<$<CONFIG:DEBUG>:-Mallocatable=95 -Mr8 -pgf90libs -Mnofma>
                               $<$<CONFIG:RELEASE>:-Mallocatable=95 -Mr8 -pgf90libs>
                              )
