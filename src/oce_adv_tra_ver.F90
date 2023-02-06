@@ -341,6 +341,7 @@ subroutine adv_tra_ver_qr4c(w, ttf, partit, mesh, num_ord, flux, o_init_zero)
 #include "associate_mesh_def.h"
 #include "associate_part_ass.h"
 #include "associate_mesh_ass.h"
+#include "edsl/interface.h"
 
     l_init_zero=.true.
     if (present(o_init_zero)) then
@@ -359,39 +360,42 @@ subroutine adv_tra_ver_qr4c(w, ttf, partit, mesh, num_ord, flux, o_init_zero)
     end if
 !$OMP PARALLEL DEFAULT(SHARED) PRIVATE(tvert,n, nz, nzmax, nzmin, Tmean, Tmean1, Tmean2, qc, qu,qd)
 !$OMP DO
-    !$ACC PARALLEL LOOP GANG DEFAULT(PRESENT) VECTOR_LENGTH(acc_vl)
-    do n=1, myDim_nod2D
-       !_______________________________________________________________________
-       nzmax=nlevels_nod2D(n)
-       nzmin=ulevels_nod2D(n)
-       !_______________________________________________________________________
-       ! vert. flux at surface layer
-       nz=nzmin
-       flux(nz,n)=-ttf(nz,n)*W(nz,n)*area(nz,n)-flux(nz,n)
+    !$ACC PARALLEL LOOP GANG VECTOR COLLAPSE(2) DEFAULT(PRESENT) VECTOR_LENGTH(acc_vl)
+    DO_NODES_AND_VERTICAL_LEVELS
+        !_______________________________________________________________________
+        nzmax=nlevels_nod2D(n)
+        nzmin=ulevels_nod2D(n)
+        !_______________________________________________________________________
+        ! vert. flux at surface layer
+        OPERATE_AT(VERTICAL_LEVEL, nzmin)
+            flux(nz,n)=-ttf(nz,n)*W(nz,n)*area(nz,n)-flux(nz,n)
+        END_OPERATE_AT
 
-       !_______________________________________________________________________
-       ! vert. flux 2nd layer --> centered differences
-       nz=nzmin+1
-       flux(nz,n)=-0.5_WP*(ttf(nz-1,n)+ttf(nz,n))*W(nz,n)*area(nz,n)-flux(nz,n)
+        !_______________________________________________________________________
+        ! vert. flux 2nd layer --> centered differences
+        OPERATE_AT(VERTICAL_LEVEL, nzmin + 1)
+            flux(nz,n)=-0.5_WP*(ttf(nz-1,n)+ttf(nz,n))*W(nz,n)*area(nz,n)-flux(nz,n)
+        END_OPERATE_AT
 
-       !_______________________________________________________________________
-       ! vert. flux at bottom - 1 layer --> centered differences
-       nz=nzmax-1
-       flux(nz,n)=-0.5_WP*(ttf(nz-1,n)+ttf(nz,n))*W(nz,n)*area(nz,n)-flux(nz,n)
+        !_______________________________________________________________________
+        ! vert. flux at bottom - 1 layer --> centered differences
+        OPERATE_AT(VERTICAL_LEVEL, nzmax - 1)
+            flux(nz,n)=-0.5_WP*(ttf(nz-1,n)+ttf(nz,n))*W(nz,n)*area(nz,n)-flux(nz,n)
+        END_OPERATE_AT
 
-       !_______________________________________________________________________
-       ! vert. flux at bottom layer --> zero bottom flux
-       nz=nzmax
-       flux(nz,n)= 0.0_WP-flux(nz,n)
+        !_______________________________________________________________________
+        ! vert. flux at bottom layer --> zero bottom flux
+        OPERATE_AT(VERTICAL_LEVEL, nzmax)
+            flux(nz,n)= 0.0_WP-flux(nz,n)
+        END_OPERATE_AT
 
-       !_______________________________________________________________________
-       ! Be carefull have to do vertical tracer advection here on old vertical grid
-       ! also horizontal advection is done on old mesh (see helem contains old
-       ! mesh information)
-       !_______________________________________________________________________
-       ! vert. flux at remaining levels
-       !$ACC LOOP VECTOR
-       do nz=nzmin+2,nzmax-2
+        !_______________________________________________________________________
+        ! Be carefull have to do vertical tracer advection here on old vertical grid
+        ! also horizontal advection is done on old mesh (see helem contains old
+        ! mesh information)
+        !_______________________________________________________________________
+        ! vert. flux at remaining levels
+        OPERATE_ON_RANGE(VERTICAL_LEVEL, nzmin + 2, nzmax - 2)
             !centered (4th order)
             qc=(ttf(nz-1,n)-ttf(nz  ,n))/(Z_3d_n(nz-1,n)-Z_3d_n(nz  ,n))
             qu=(ttf(nz  ,n)-ttf(nz+1,n))/(Z_3d_n(nz  ,n)-Z_3d_n(nz+1,n))
@@ -401,9 +405,8 @@ subroutine adv_tra_ver_qr4c(w, ttf, partit, mesh, num_ord, flux, o_init_zero)
             Tmean2=ttf(nz-1,n)+(2*qc+qd)*(zbar_3d_n(nz,n)-Z_3d_n(nz-1,n))/3.0_WP
             Tmean =(W(nz,n)+abs(W(nz,n)))*Tmean1+(W(nz,n)-abs(W(nz,n)))*Tmean2
             flux(nz,n)=(-0.5_WP*(1.0_WP-num_ord)*Tmean - num_ord*(0.5_WP*(Tmean1+Tmean2))*W(nz,n))*area(nz,n)-flux(nz,n)
-       end do
-       !$ACC END LOOP
-    end do
+        END_OPERATE_RANGE
+    END_NODES_AND_VERTICAL_LEVELS
     !$ACC END PARALLEL LOOP
 !$OMP END DO
 !$OMP END PARALLEL
