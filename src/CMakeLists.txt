@@ -196,9 +196,13 @@ if(${BUILD_FESOM_AS_LIBRARY})
   target_compile_options(${PROJECT_NAME} PRIVATE -fPIC)
   target_compile_options(${PROJECT_NAME}_C PRIVATE -fPIC)
 endif()
+
+target_compile_definitions(${PROJECT_NAME} PRIVATE EDSL_CPU)
+
 target_include_directories(${PROJECT_NAME} PRIVATE ${NETCDF_Fortran_INCLUDE_DIRECTORIES} ${OASIS_Fortran_INCLUDE_DIRECTORIES})
 target_include_directories(${PROJECT_NAME} PRIVATE ${MCT_Fortran_INCLUDE_DIRECTORIES} ${MPEU_Fortran_INCLUDE_DIRECTORIES})
 target_include_directories(${PROJECT_NAME} PRIVATE ${SCRIP_Fortran_INCLUDE_DIRECTORIES})
+target_include_directories(${PROJECT_NAME} PRIVATE ${src_home}/edsl)
 target_link_libraries(${PROJECT_NAME} ${PROJECT_NAME}_C ${NETCDF_Fortran_LIBRARIES} ${NETCDF_C_LIBRARIES} ${OASIS_Fortran_LIBRARIES})
 target_link_libraries(${PROJECT_NAME} ${PROJECT_NAME}_C ${MCT_Fortran_LIBRARIES} ${MPEU_Fortran_LIBRARIES} ${SCRIP_Fortran_LIBRARIES})
 target_link_libraries(${PROJECT_NAME} async_threads_cpp)
