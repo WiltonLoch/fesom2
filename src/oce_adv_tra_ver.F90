@@ -358,13 +358,14 @@ subroutine adv_tra_ver_qr4c(w, ttf, partit, mesh, num_ord, flux, o_init_zero)
        !$ACC END PARALLEL LOOP
 !$OMP END PARALLEL DO
     end if
-!$OMP PARALLEL DEFAULT(SHARED) PRIVATE(tvert,n, nz, nzmax, nzmin, Tmean, Tmean1, Tmean2, qc, qu,qd)
+!$OMP PARALLEL DEFAULT(SHARED) PRIVATE(tvert, node, vertical_level, nzmax, nzmin, Tmean, Tmean1, Tmean2, qc, qu,qd)
 !$OMP DO
     !$ACC PARALLEL LOOP GANG VECTOR COLLAPSE(2) DEFAULT(PRESENT) VECTOR_LENGTH(acc_vl)
     DO_NODES_AND_VERTICAL_LEVELS(node, 1, myDim_nod2D, vertical_level, 1, nl)
         !_______________________________________________________________________
         nzmax=nlevels_nod2D(node)
         nzmin=ulevels_nod2D(node)
+
         !_______________________________________________________________________
         ! vert. flux at surface layer
         OPERATE_AT(vertical_level, nzmin)
