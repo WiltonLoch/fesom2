@@ -333,7 +333,7 @@ subroutine adv_tra_ver_qr4c(w, ttf, partit, mesh, num_ord, flux, o_init_zero)
     logical, optional            :: o_init_zero
     logical                      :: l_init_zero
     real(kind=WP)                :: tvert(mesh%nl)
-    integer                      :: n, nz, nzmax, nzmin
+    integer                      :: node, vertical_level, nzmax, nzmin
     real(kind=WP)                :: Tmean, Tmean1, Tmean2
     real(kind=WP)                :: qc, qu, qd
 
@@ -350,9 +350,9 @@ subroutine adv_tra_ver_qr4c(w, ttf, partit, mesh, num_ord, flux, o_init_zero)
     if (l_init_zero) then
 !$OMP PARALLEL DO
        !$ACC PARALLEL LOOP GANG VECTOR COLLAPSE(2) DEFAULT(PRESENT) VECTOR_LENGTH(acc_vl)
-       do n=1, myDim_nod2D
-          do nz=1, mesh%nl
-             flux(nz, n)=0.0_WP
+       do node = 1, myDim_nod2D
+          do vertical_level = 1, mesh%nl
+             flux(vertical_level, node) = 0.0_WP
           end do
        end do
        !$ACC END PARALLEL LOOP
@@ -361,32 +361,45 @@ subroutine adv_tra_ver_qr4c(w, ttf, partit, mesh, num_ord, flux, o_init_zero)
 !$OMP PARALLEL DEFAULT(SHARED) PRIVATE(tvert,n, nz, nzmax, nzmin, Tmean, Tmean1, Tmean2, qc, qu,qd)
 !$OMP DO
     !$ACC PARALLEL LOOP GANG VECTOR COLLAPSE(2) DEFAULT(PRESENT) VECTOR_LENGTH(acc_vl)
-    DO_NODES_AND_VERTICAL_LEVELS
+    DO_NODES_AND_VERTICAL_LEVELS(node, 1, myDim_nod2D, vertical_level, 1, nl)
         !_______________________________________________________________________
-        nzmax=nlevels_nod2D(n)
-        nzmin=ulevels_nod2D(n)
+        nzmax=nlevels_nod2D(node)
+        nzmin=ulevels_nod2D(node)
         !_______________________________________________________________________
         ! vert. flux at surface layer
-        OPERATE_AT(VERTICAL_LEVEL, nzmin)
-            flux(nz,n)=-ttf(nz,n)*W(nz,n)*area(nz,n)-flux(nz,n)
+        OPERATE_AT(vertical_level, nzmin)
+            flux(vertical_level, node) = - ttf (vertical_level, node) &
+                                         * W   (vertical_level, node) &
+                                         * area(vertical_level, node) &
+                                         - flux(vertical_level, node)
         END_OPERATE_AT
 
         !_______________________________________________________________________
         ! vert. flux 2nd layer --> centered differences
-        OPERATE_AT(VERTICAL_LEVEL, nzmin + 1)
-            flux(nz,n)=-0.5_WP*(ttf(nz-1,n)+ttf(nz,n))*W(nz,n)*area(nz,n)-flux(nz,n)
+        OPERATE_AT(vertical_level, nzmin + 1)
+            flux(vertical_level, node) = - 0.5_WP                            &
+                                         * ( ttf(vertical_level - 1, node)   &
+                                           + ttf(vertical_level,     node) ) &
+                                         * W    (vertical_level,     node)   &
+                                         * area (vertical_level,     node)   &
+                                         - flux (vertical_level,     node)
         END_OPERATE_AT
 
         !_______________________________________________________________________
         ! vert. flux at bottom - 1 layer --> centered differences
-        OPERATE_AT(VERTICAL_LEVEL, nzmax - 1)
-            flux(nz,n)=-0.5_WP*(ttf(nz-1,n)+ttf(nz,n))*W(nz,n)*area(nz,n)-flux(nz,n)
+        OPERATE_AT(vertical_level, nzmax - 1)
+            flux(vertical_level, node) = - 0.5_WP                            &
+                                         * ( ttf(vertical_level - 1, node)   &
+                                           + ttf(vertical_level,     node) ) &
+                                         * W    (vertical_level,     node)   &
+                                         * area (vertical_level,     node)   &
+                                         - flux (vertical_level,     node)
         END_OPERATE_AT
 
         !_______________________________________________________________________
         ! vert. flux at bottom layer --> zero bottom flux
-        OPERATE_AT(VERTICAL_LEVEL, nzmax)
-            flux(nz,n)= 0.0_WP-flux(nz,n)
+        OPERATE_AT(vertical_level, nzmax)
+            flux(vertical_level, node) = 0.0_WP - flux(vertical_level, node)
         END_OPERATE_AT
 
         !_______________________________________________________________________
@@ -395,16 +408,31 @@ subroutine adv_tra_ver_qr4c(w, ttf, partit, mesh, num_ord, flux, o_init_zero)
         ! mesh information)
         !_______________________________________________________________________
         ! vert. flux at remaining levels
-        OPERATE_ON_RANGE(VERTICAL_LEVEL, nzmin + 2, nzmax - 2)
+        OPERATE_ON_RANGE(vertical_level, nzmin + 2, nzmax - 2)
             !centered (4th order)
-            qc=(ttf(nz-1,n)-ttf(nz  ,n))/(Z_3d_n(nz-1,n)-Z_3d_n(nz  ,n))
-            qu=(ttf(nz  ,n)-ttf(nz+1,n))/(Z_3d_n(nz  ,n)-Z_3d_n(nz+1,n))
-            qd=(ttf(nz-2,n)-ttf(nz-1,n))/(Z_3d_n(nz-2,n)-Z_3d_n(nz-1,n))
+            qc = ( ttf   (vertical_level - 1, node) - ttf   (vertical_level,     node) ) &
+               / ( Z_3d_n(vertical_level - 1, node) - Z_3d_n(vertical_level,     node) )
+            qu = ( ttf   (vertical_level,     node) - ttf   (vertical_level + 1, node) ) &
+               / ( Z_3d_n(vertical_level,     node) - Z_3d_n(vertical_level + 1, node) )
+            qd = ( ttf   (vertical_level - 2, node) - ttf   (vertical_level - 1, node) ) &
+               / ( Z_3d_n(vertical_level - 2, node) - Z_3d_n(vertical_level - 1, node) )
 
-            Tmean1=ttf(nz  ,n)+(2*qc+qu)*(zbar_3d_n(nz,n)-Z_3d_n(nz  ,n))/3.0_WP
-            Tmean2=ttf(nz-1,n)+(2*qc+qd)*(zbar_3d_n(nz,n)-Z_3d_n(nz-1,n))/3.0_WP
-            Tmean =(W(nz,n)+abs(W(nz,n)))*Tmean1+(W(nz,n)-abs(W(nz,n)))*Tmean2
-            flux(nz,n)=(-0.5_WP*(1.0_WP-num_ord)*Tmean - num_ord*(0.5_WP*(Tmean1+Tmean2))*W(nz,n))*area(nz,n)-flux(nz,n)
+            Tmean1 = ttf(vertical_level    , node) + (2 * qc + qu) &
+                   * (zbar_3d_n(vertical_level,node) - Z_3d_n(vertical_level  , node)) &
+                   / 3.0_WP
+            Tmean2 = ttf(vertical_level - 1, node) + (2 * qc + qd) &
+                   * (zbar_3d_n(vertical_level,node) - Z_3d_n(vertical_level - 1, node)) &
+                   / 3.0_WP
+            Tmean = ( W(vertical_level,node) + abs(W(vertical_level, node)) ) * Tmean1 &
+                  + ( W(vertical_level,node) - abs(W(vertical_level, node)) ) * Tmean2
+
+            flux(vertical_level, node) = (                                                          &
+                                           -  0.5_WP * (1.0_WP - num_ord) * Tmean - num_ord         &
+                                           * (0.5_WP * (Tmean1 + Tmean2)) * W(vertical_level, node) &
+                                         )                                                          &
+                                       * area(vertical_level, node)                                 &
+                                       - flux(vertical_level, node)
+
         END_OPERATE_RANGE
     END_NODES_AND_VERTICAL_LEVELS
     !$ACC END PARALLEL LOOP

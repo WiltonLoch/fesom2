@@ -4,6 +4,6 @@
 
 #elif defined(EDSL_CPU)
 
-#include "cpu_backend.h"
+#include "edsl/cpu_backend.h"
 
 #endif
