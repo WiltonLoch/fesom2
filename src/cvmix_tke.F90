@@ -1,6 +1,6 @@
 
-module cvmix_tke   
-!! This module contains the main computations of diffusivities based on 
+module cvmix_tke
+!! This module contains the main computations of diffusivities based on
 !! TKE (following Gaspar'90)  with the calculation of the mixing length following (Blanke, B., P. Delecluse)
 !!
 !! @see  Gaspar, P., Y. Grégoris, and J.-M. Lefevre
@@ -30,7 +30,7 @@ use cvmix_utils,              only : cvmix_update_tke, solve_tridiag
 
 
 implicit none
-private 
+private
 save
 
 
@@ -42,13 +42,13 @@ public :: put_tke
 
 !=================================================================================
 !---------------------------------------------------------------------------------
-! Interface to call the TKE parameterization! 
+! Interface to call the TKE parameterization!
 !---------------------------------------------------------------------------------
 
 interface cvmix_coeffs_tke
   module procedure integrate_tke              ! calculation if prognostic TKE equation
   module procedure tke_wrap                   ! necessary to handle old/new values and to hand over user_defined constants
-end interface cvmix_coeffs_tke 
+end interface cvmix_coeffs_tke
 
 !---------------------------------------------------------------------------------
 ! Interface to put values to TKE variables
@@ -67,16 +67,16 @@ type, public :: tke_type
 private
 
 real(cvmix_r8)       ::  &
-  c_k                   ,& ! 
+  c_k                   ,& !
   c_eps                 ,& ! dissipation parameter
-  cd                    ,& ! 
-  alpha_tke             ,& ! 
+  cd                    ,& !
+  alpha_tke             ,& !
   clc                   ,& ! factor for Langmuir turbulence
   mxl_min               ,& ! minimum value for mixing length
   kappaM_min            ,& ! minimum value for Kappa momentum
   kappaM_max            ,& ! maximum value for Kappa momentum
-  tke_surf_min          ,& ! minimum value for surface TKE 
-  tke_min                  ! minimum value for TKE, necessary to set this value when 
+  tke_surf_min          ,& ! minimum value for surface TKE
+  tke_min                  ! minimum value for TKE, necessary to set this value when
                            ! run without IDEMIX, since there are no sources for TKE in the deep ocean otherwise
 
 integer               :: &
@@ -87,14 +87,14 @@ logical                :: &
   only_tke               ,&
   l_lc                   ,&
   use_ubound_dirichlet   ,&
-  use_lbound_dirichlet                           
+  use_lbound_dirichlet
 
 end type tke_type
 
-type(tke_type), target :: tke_constants_saved 
+type(tke_type), target :: tke_constants_saved
 
  contains
- 
+
 !=================================================================================
 
 subroutine init_tke(c_k, c_eps, cd, alpha_tke, mxl_min, KappaM_min, KappaM_max, &
@@ -104,27 +104,27 @@ subroutine init_tke(c_k, c_eps, cd, alpha_tke, mxl_min, KappaM_min, KappaM_max, 
 
 ! This subroutine sets user or default values for TKE parameters
 
-real(cvmix_r8),optional, intent(in)           ::  & 
+real(cvmix_r8),optional, intent(in)           ::  &
   c_k                                            ,&
   c_eps                                          ,&
   cd                                             ,&
   alpha_tke                                      ,&
   mxl_min                                        ,&
-  KappaM_min                                     ,& 
+  KappaM_min                                     ,&
   KappaM_max                                     ,&
   tke_surf_min                                   ,&
   clc                                            ,&
   tke_min
 
 integer, intent(in),optional                   :: &
-  tke_mxl_choice                                 ,& 
+  tke_mxl_choice                                 ,&
   handle_old_vals
 
 logical, intent(in), optional                  :: &
   only_tke                                       ,&
   l_lc                                           ,&
   use_ubound_dirichlet                           ,&
-  use_lbound_dirichlet                           
+  use_lbound_dirichlet
 
 type(tke_type), intent(inout),target, optional :: &
   tke_userdef_constants
@@ -289,8 +289,8 @@ subroutine tke_wrap(Vmix_vars, Vmix_params, tke_userdef_constants)
 type(tke_type), intent(in), optional, target ::  &
   tke_userdef_constants                            !
 
-type(cvmix_data_type), intent(inout)         ::  & 
-  Vmix_vars                                        ! 
+type(cvmix_data_type), intent(inout)         ::  &
+  Vmix_vars                                        !
 
 type(cvmix_global_params_type), intent(in)   ::  &
   Vmix_params                                      !
@@ -314,7 +314,7 @@ real(cvmix_r8), dimension(Vmix_vars%nlev)  ::  &
   new_KappaM                                    ,& !
   new_KappaH                                    ,& !
   new_tke                                       ,& !
-  new_tke_diss                          
+  new_tke_diss
 
 integer                                       :: &
   nlev                                          ,& !
@@ -325,7 +325,7 @@ integer :: i, j, tstep_count
 type(tke_type), pointer                       :: &
   tke_constants_in                                 !
 
-! FIXME: nils: this routine is never called. 
+! FIXME: nils: this routine is never called.
 ! This is an emergency stop in case th routine is called.
 write(*,*) 'i am wrapping'
 stop
@@ -346,9 +346,9 @@ call cvmix_coeffs_tke( &
                  dzt          = Vmix_vars%dzt,                                    &
                  nlev         = nlev,                                             &
                  max_nlev     = max_nlev,                                         &
-                 dtime        = Vmix_vars%dtime,                                  & 
-                 rho_ref      = Vmix_vars%rho_ref,                                & 
-                 grav         = Vmix_params%Gravity,                              & 
+                 dtime        = Vmix_vars%dtime,                                  &
+                 rho_ref      = Vmix_vars%rho_ref,                                &
+                 grav         = Vmix_params%Gravity,                              &
                  ! essentials
                  tke_old      = Vmix_vars%tke,            & ! in
                  tke_new      = new_tke,                  & ! out
@@ -377,7 +377,7 @@ call cvmix_coeffs_tke( &
                  tke_Ttot     = tke_Ttot,                                         &
                  tke_Lmix     = tke_Lmix,                                         &
                  tke_Pr       = tke_Pr,                                           &
-                 tke_plc      = tke_plc,                                & !by_Oliver 
+                 tke_plc      = tke_plc,                                & !by_Oliver
                  ! debugging
                  cvmix_int_1   = cvmix_int_1,             &
                  cvmix_int_2   = cvmix_int_2,             &
@@ -397,7 +397,7 @@ call cvmix_coeffs_tke( &
 !!update Vmix_vars to new values
 !call cvmix_update_tke(tke_constants_in%handle_old_vals,                           &
 !!                     Vmix_vars%nlev,                                              &
-!                     nlev,                                                        &  
+!                     nlev,                                                        &
 !                     !tke_diss_out = Vmix_vars%tke_diss,                           &
 !                     new_tke_diss = new_tke_diss,                                 &
 !                     tke_new      = Vmix_vars%tke,                                &
@@ -429,7 +429,7 @@ subroutine integrate_tke( &
                          max_nlev,             &
                          !old_tke_diss,         & ! FIXME: nils: today: delete?
                          Ssqr,                 &
-                         Nsqr,                 & 
+                         Nsqr,                 &
                          tke_Tbpr,             & ! diagnostic
                          tke_Tspr,             & ! diagnostic
                          tke_Tdif,             & ! diagnostic
@@ -456,61 +456,61 @@ subroutine integrate_tke( &
                          alpha_c,              & ! FIXME: today: put to initialize
                          tke_userdef_constants)
 !subroutine integrate_tke(jc, blockNo, tstep_count)
-  
+
   type(tke_type), intent(in), optional, target                 :: &
     tke_userdef_constants
-  
+
   integer,intent(in)                                           :: &
     nlev                                                         ,& !
     max_nlev                                                      !
   integer,intent(in)                                           :: &
     i, j, tstep_count
-  
-  ! OLD values 
-  real(cvmix_r8), dimension(nlev+1), intent(in)                :: & 
+
+  ! OLD values
+  real(cvmix_r8), dimension(nlev+1), intent(in)                :: &
     tke_old                                                      ,& !
     !old_tke_diss                                                 ,& !
     old_KappaM                                                   ,& !
     old_KappaH                                                   ,& !
     dzt                                                             !
-  real(cvmix_r8), dimension(nlev+1), intent(in)             :: & 
+  real(cvmix_r8), dimension(nlev+1), intent(in)             :: &
     Ssqr                                                         ,& !
-    Nsqr                                                         
-   
+    Nsqr
+
   real(cvmix_r8), dimension(nlev), intent(in)                  :: &
     dzw                                                             !
 
   ! Langmuir turbulence
   real(cvmix_r8), dimension(nlev+1), intent(in), optional  :: &
     tke_plc
-   
+
   ! IDEMIX variables, if run coupled iw_diss is added as forcing to TKE
   real(cvmix_r8), dimension(nlev+1), intent(in), optional  :: &
-    E_iw                                                         ,& !  
+    E_iw                                                         ,& !
     alpha_c                                                      ,& !
     iw_diss                                                         !
-  
-  real(cvmix_r8), intent(in)                                   :: & 
+
+  real(cvmix_r8), intent(in)                                   :: &
     bottom_fric                                                  ,& !
     forc_rho_surf                                                ,& ! FIXME: nils: what is this?
     rho_ref                                                      ,& !
     dtime                                                        ,& ! time step
     grav                                                            ! gravity constant
-  
+
   ! FIXME: nils: why inout? why not only in?
-  real(cvmix_r8), intent(in)                                   :: & 
+  real(cvmix_r8), intent(in)                                   :: &
     forc_tke_surf
-              
+
   !real(cvmix_r8),dimension(max_nlev+1), intent(in), optional       :: &
   !  Kappa_GM                                                        !
-  
+
   ! NEW values
   real(cvmix_r8), dimension(nlev+1), intent(out)             :: &
-    tke_new                                                      ,& ! 
+    tke_new                                                      ,& !
     !tke_diss_out                                                 ,& !
     KappaM_out                                                   ,& !
     KappaH_out
-  
+
   ! diagnostics
   real(cvmix_r8), dimension(nlev+1), intent(out) ::                &
      tke_Tbpr                                                     ,&
@@ -528,8 +528,8 @@ subroutine integrate_tke( &
   real(cvmix_r8), dimension(nlev+1), intent(out) ::                &
      cvmix_int_1                                                  ,&
      cvmix_int_2                                                  ,&
-     cvmix_int_3                                                
-  
+     cvmix_int_3
+
   ! local variables
   real(cvmix_r8), dimension(nlev+1)                            :: &
     tke_unrest                                                   ,& ! copy of tke before restorring to background value
@@ -537,20 +537,20 @@ subroutine integrate_tke( &
     mxl                                                          ,& ! mixing length scale (m)
     sqrttke                                                      ,& ! square root of TKE (m/s)
     prandtl                                                      ,& ! Prandtl number
-    Rinum                                                        ,& ! Richardson number 
+    Rinum                                                        ,& ! Richardson number
     K_diss_v                                                     ,& ! shear production of TKE (m^2/s^3)
     P_diss_v                                                     ,& ! buoyancy production of TKE (m^2/s^3)
     forc                                                            ! combined forcing for TKE (m^2/s^3)
-  
+
   real(cvmix_r8) :: tke_surf, tke_bott
-  
+
   real(cvmix_r8)                                               :: &
     ! FIXME: nils: today: delete tke_surf_corr?
     !tke_surf_corr                                                ,& ! correction of surface density according to surface buoyancy flux
     alpha_tke                                                    ,& ! {30}
     c_eps                                                        ,& ! {0.7}
     cd                                                           ,& ! (3.75}
-    KappaM_max                                                   ,& ! 
+    KappaM_max                                                   ,& !
     mxl_min                                                      ,& ! {1e-8}
     c_k                                                          ,& ! {0.1}
     clc                                                          ,& ! {0.15}
@@ -559,13 +559,13 @@ subroutine integrate_tke( &
   integer :: tke_mxl_choice
 
   logical :: only_tke, use_ubound_dirichlet, use_lbound_dirichlet,l_lc
-  
+
   real(cvmix_r8)                                               :: &
-    zzw                                                          ,& ! depth of interface k 
+    zzw                                                          ,& ! depth of interface k
     depth                                                        ,&! total water depth
     diff_surf_forc                                               ,&
     diff_bott_forc
-    
+
   ! input to tri-diagonal solver
   real(cvmix_r8), dimension(nlev+1)                            :: &
     a_dif                                                        ,& !
@@ -576,15 +576,15 @@ subroutine integrate_tke( &
     c_tri                                                        ,& !
     d_tri                                                        ,& !
     ke                                                              !  diffusivity for tke
-  
+
   integer :: k, kk, kp1
-  
+
   ! FIXME: nils: Where are these values set?
   real(cvmix_r8) :: kappaM_min
   integer :: recnum
-  
+
   type(tke_type), pointer :: tke_constants_in
-  
+
   ! FIXME: nils: What happens here?
   tke_constants_in => tke_constants_saved
   if (present(tke_userdef_constants)) then
@@ -593,7 +593,7 @@ subroutine integrate_tke( &
 
   ! FIXME: nils: What should we do with height of last grid box dzt(max_nlev+1)?
   !              This should not be as thick as the distance to the next tracer
-  !              point (which is a dry point). 
+  !              point (which is a dry point).
   !              Be careful if you divide by 0.5 here. Maybe later we use ddpo
   !              or something like this that might include already this factor.
 
@@ -620,11 +620,11 @@ subroutine integrate_tke( &
   a_tri = 0.0
   b_tri = 0.0
   c_tri = 0.0
- 
+
   !---------------------------------------------------------------------------------
   ! set tke_constants locally
   !---------------------------------------------------------------------------------
- 
+
   alpha_tke  = tke_constants_in%alpha_tke
   c_eps      = tke_constants_in%c_eps
   cd         = tke_constants_in%cd
@@ -635,7 +635,7 @@ subroutine integrate_tke( &
   tke_surf_min   = tke_constants_in%tke_surf_min
   tke_mxl_choice = tke_constants_in%tke_mxl_choice
   only_tke = tke_constants_in%only_tke
-  l_lc     = tke_constants_in%l_lc 
+  l_lc     = tke_constants_in%l_lc
   clc      = tke_constants_in%clc
   use_ubound_dirichlet = tke_constants_in%use_ubound_dirichlet
   use_lbound_dirichlet = tke_constants_in%use_lbound_dirichlet
@@ -657,20 +657,20 @@ subroutine integrate_tke( &
   ! FIXME: nils: Is kappaM_min ever used?
   ! FIXME: use kappaM_min from namelist
   ! FIXME: where is kappaM_min used?
-  ! FIXME: start with small k in all KappaM_min 
+  ! FIXME: start with small k in all KappaM_min
   kappaM_min = 0.0
   !KappaM_out=max(tke_userdef_constants%kappaM_min,KappaM_out)
-  
+
   !---------------------------------------------------------------------------------
   ! Part 1: calculate mixing length scale
   !---------------------------------------------------------------------------------
   sqrttke = sqrt(max(0d0,tke_old))
- 
+
   ! turbulent mixing length
   mxl = sqrt(2D0)*sqrttke/sqrt(max(1d-12,Nsqr))
 
   ! constrain mixing length scale as in MITgcm
-  if (tke_mxl_choice==2) then 
+  if (tke_mxl_choice==2) then
     !FIXME: What should we do at the surface and bottom?
     mxl(1) = 0.d0
     mxl(nlev+1) = 0.d0
@@ -695,26 +695,26 @@ subroutine integrate_tke( &
     write(*,*) 'Wrong choice of tke_mxl_choice. Aborting...'
     stop
   endif
-     
+
   !---------------------------------------------------------------------------------
   ! Part 2: calculate diffusivities
   !---------------------------------------------------------------------------------
   ! see. Blanke and Delecluse 1993, eq. 2.25
   KappaM_out = min(KappaM_max,c_k*mxl*sqrttke)
   Rinum = Nsqr/max(Ssqr,1d-12)
- 
+
   ! FIXME: nils: Check this later if IDEMIX is coupled.
   ! FIXME: nils: Why E_iw**2 and not dissipation with mixed time level?
   ! FIXME: nils: Why not passing Rinum as Rinum_idemix to tke scheme?
   if (.not.only_tke) then  !IDEMIX is on
     Rinum = min(Rinum,KappaM_out*Nsqr/max(1d-12,alpha_c*E_iw**2))
   end if
-  
-  ! Richardson number dependent expression is used for the P_rt (Osborn 1980, 
+
+  ! Richardson number dependent expression is used for the P_rt (Osborn 1980,
   ! Crawford 1982) --> see. Blanke and Delecluse 1993, eq. 2.33 & 2.34
   ! Why 6.6*... ???
   prandtl=max(1d0,min(10d0,6.6*Rinum))
-  
+
   ! see. Blanke and Delecluse 1993, eq. 2.26
   KappaH_out=KappaM_out/prandtl
 
@@ -725,13 +725,13 @@ subroutine integrate_tke( &
   forc = 0.0
 
   ! --- forcing by shear and buoycancy production
-  K_diss_v   = Ssqr*KappaM_out 
+  K_diss_v   = Ssqr*KappaM_out
   P_diss_v   = Nsqr*KappaH_out
   ! FIXME: nils: Is forc_rho_surf set somewhere?
   ! FIXME: nils: What does forc_rho_surf mean?
   P_diss_v(1) = -forc_rho_surf*grav/rho_ref
   forc = forc + K_diss_v - P_diss_v
-   
+
   ! --- additional langmuir turbulence term
   if (l_lc) then
     forc = forc + tke_plc
@@ -743,12 +743,12 @@ subroutine integrate_tke( &
   endif
 
   !---------------------------------------------------------------------------------
-  ! Part 4: vertical diffusion and dissipation is solved implicitely 
+  ! Part 4: vertical diffusion and dissipation is solved implicitely
   !---------------------------------------------------------------------------------
   ke = 0.d0
   do k = 1, nlev
     kp1 = min(k+1,nlev)
-    kk  = max(k,2) 
+    kk  = max(k,2)
     ke(k) = alpha_tke*0.5*(KappaM_out(kp1)+KappaM_out(kk))
   enddo
 
@@ -758,13 +758,13 @@ subroutine integrate_tke( &
     c_dif(k) = ke(k)/( dzt(k)*dzw(k) )
   enddo
   c_dif(nlev+1) = 0.d0 ! not part of the diffusion matrix, thus value is arbitrary
- 
+
   !--- b is main diagonal of matrix
   do k=2,nlev
     !b_dif(k) = delta(k)/dzt(k)+delta(k+1)/dzt(k)
     b_dif(k) = ke(k-1)/( dzt(k)*dzw(k-1) ) + ke(k)/( dzt(k)*dzw(k) )
   enddo
- 
+
   !--- a is upper diagonal of matrix
   do k=2,nlev+1
     !a_dif(k) = delta(k)/dzt(k)
@@ -774,7 +774,7 @@ subroutine integrate_tke( &
 
   ! copy tke_old
   tke_upd(1:nlev+1) = tke_old(1:nlev+1)
- 
+
   ! upper boundary condition
   if (use_ubound_dirichlet) then
     sqrttke(1)      = 0.d0 ! to suppres dissipation for k=1
@@ -807,7 +807,7 @@ subroutine integrate_tke( &
     forc(nlev)      = forc(nlev)+diff_bott_forc
     c_dif(nlev)     = 0.d0 ! and set matrix element to zero
     b_dif(nlev+1)   = 0.d0 ! 0 line in matrix for k=nlev+1
-    a_dif(nlev+1)   = 0.d0 ! 0 line in matrix for k=nlev+1   
+    a_dif(nlev+1)   = 0.d0 ! 0 line in matrix for k=nlev+1
   else
     b_dif(nlev+1)   = ke(nlev)/( dzt(nlev+1)*dzw(nlev) )
     diff_bott_forc  = 0.0
@@ -818,13 +818,13 @@ subroutine integrate_tke( &
   b_tri = 1+dtime*b_dif
   b_tri(2:nlev) = b_tri(2:nlev) + dtime*c_eps*sqrttke(2:nlev)/mxl(2:nlev)
   c_tri = -dtime*c_dif
- 
+
   !--- d is r.h.s. of implicite equation (d: new tke with only explicite tendencies included)
   d_tri(1:nlev+1)  = tke_upd(1:nlev+1) + dtime*forc(1:nlev+1)
- 
+
   ! solve the tri-diag matrix
   call solve_tridiag(a_tri, b_tri, c_tri, d_tri, tke_new, nlev+1)
- 
+
   ! --- diagnose implicite tendencies (only for diagnostics)
   ! vertical diffusion of TKE
   do k=2,nlev
@@ -840,13 +840,13 @@ subroutine integrate_tke( &
   if (use_ubound_dirichlet) then
     tke_Tdif(1) = - ke(1)/dzw(1)/dzt(1) &
                     * (tke_surf-tke_new(2))
-  endif 
+  endif
   if (use_lbound_dirichlet) then
     k = nlev+1
     tke_Tdif(k) = ke(k-1)/dzw(k-1)/dzt(k) &
                     * (tke_new(k-1)-tke_bott)
-  endif 
- 
+  endif
+
   ! dissipation of TKE
   tke_Tdis = 0.d0
   tke_Tdis(2:nlev) = -c_eps/mxl(2:nlev)*sqrttke(2:nlev)*tke_new(2:nlev)
@@ -861,16 +861,16 @@ subroutine integrate_tke( &
   ! FIXME: nils: today: delete
   ! add TKE if surface density flux drains TKE in uppermost box
   !tke_surf_corr = 0.0
- 
+
   ! restrict values of TKE to tke_min, if IDEMIX is not used
   if (only_tke) then
     tke_new(1:nlev+1) = MAX(tke_new(1:nlev+1), tke_min)
-  end if 
- 
+  end if
+
   !---------------------------------------------------------------------------------
   ! Part 6: Assign diagnostic variables
   !---------------------------------------------------------------------------------
-  ! tke_Ttot =   tke_Tbpr + tke_Tspr + tke_Tdif + tke_Tdis 
+  ! tke_Ttot =   tke_Tbpr + tke_Tspr + tke_Tdif + tke_Tdis
   !            + tke_Twin + tke_Tiwf
   tke_Tbpr(1:nlev+1) = -P_diss_v(1:nlev+1)
   tke_Tspr(1:nlev+1) = K_diss_v(1:nlev+1)
@@ -878,16 +878,16 @@ subroutine integrate_tke( &
   !tke_Tdis = -tke_diss_out
   tke_Tbck = (tke_new-tke_unrest)/dtime
   if (use_ubound_dirichlet) then
-    tke_Twin(1) = (tke_new(1)-tke_old(1))/dtime - tke_Tdif(1) 
+    tke_Twin(1) = (tke_new(1)-tke_old(1))/dtime - tke_Tdif(1)
     tke_Tbck(1) = 0.0
   else
-    !tke_Twin(1) = forc_tke_surf/(dzt(1)) 
+    !tke_Twin(1) = forc_tke_surf/(dzt(1))
     tke_Twin(1) = (cd*forc_tke_surf**(3./2.))/(dzt(1))
   endif
   ! FIXME: Find better name for tke_Twin either tke_Tbou or use tke_Tsur
   ! tke_Tbot
   if (use_lbound_dirichlet) then
-    tke_Twin(nlev+1) = (tke_new(nlev+1)-tke_old(nlev+1))/dtime - tke_Tdif(nlev+1) 
+    tke_Twin(nlev+1) = (tke_new(nlev+1)-tke_old(nlev+1))/dtime - tke_Tdif(nlev+1)
     tke_Tbck(nlev+1) = 0.0
   else
     !FIXME: no flux condition so far, add bottom friction later
@@ -901,7 +901,7 @@ subroutine integrate_tke( &
   tke_Lmix(1:nlev+1) = mxl(1:nlev+1)
   tke_Pr(nlev+1:) = 0.0
   tke_Pr(1:nlev+1) = prandtl(1:nlev+1)
-   
+
   ! -----------------------------------------------
   ! the rest is for debugging
   ! -----------------------------------------------
@@ -917,7 +917,7 @@ subroutine integrate_tke( &
   if (i==8 .and. j==10) then
   !if (i==45 .and. j==10 .and. tstep_count==10) then
   ! -----------------------------------------------
- 
+
     write(*,*) '================================================================================'
     write(*,*) 'i = ', i, 'j = ', j, 'tstep_count = ', tstep_count
 !!!    write(*,*) 'nlev = ', nlev
@@ -992,7 +992,7 @@ subroutine cvmix_tke_put_tke_int(varname,val,tke_userdef_constants)
 !IN
     character(len=*),           intent(in) :: varname
     integer,                    intent(in) :: val
-!OUT   
+!OUT
     type(tke_type), intent(inout), target, optional:: tke_userdef_constants
     type(tke_type), pointer :: tke_constants_out
 
@@ -1005,10 +1005,10 @@ subroutine cvmix_tke_put_tke_int(varname,val,tke_userdef_constants)
 
     case('handle_old_vals')
     tke_constants_out%handle_old_vals=val
-    case ('tke_mxl_choice') 
-    tke_constants_out%tke_mxl_choice=val 
+    case ('tke_mxl_choice')
+    tke_constants_out%tke_mxl_choice=val
   end select
-    
+
 end subroutine cvmix_tke_put_tke_int
 
 !=================================================================================
@@ -1018,7 +1018,7 @@ subroutine cvmix_tke_put_tke_logical(varname,val,tke_userdef_constants)
 !IN
     character(len=*),           intent(in) :: varname
     logical,                    intent(in) :: val
-!OUT   
+!OUT
     type(tke_type), intent(inout), target, optional:: tke_userdef_constants
     type(tke_type), pointer :: tke_constants_out
 
@@ -1030,13 +1030,13 @@ subroutine cvmix_tke_put_tke_logical(varname,val,tke_userdef_constants)
   select case(trim(varname))
 
     case('only_tke')
-      tke_constants_out%only_tke=val  
+      tke_constants_out%only_tke=val
     case('use_ubound_dirichlet')
-      tke_constants_out%use_ubound_dirichlet=val  
+      tke_constants_out%use_ubound_dirichlet=val
     case('use_lbound_dirichlet')
-      tke_constants_out%use_lbound_dirichlet=val 
+      tke_constants_out%use_lbound_dirichlet=val
     case('l_lc')
-      tke_constants_out%l_lc=val 
+      tke_constants_out%l_lc=val
     case DEFAULT
       print*, "ERROR:", trim(varname), " not a valid choice"
       stop 1
@@ -1051,7 +1051,7 @@ subroutine cvmix_tke_put_tke_real(varname,val,tke_userdef_constants)
 !IN
     character(len=*),           intent(in) :: varname
     real(cvmix_r8),             intent(in) :: val
-!OUT   
+!OUT
     type(tke_type), intent(inout), target, optional:: tke_userdef_constants
     type(tke_type), pointer :: tke_constants_out
 
@@ -1063,26 +1063,26 @@ subroutine cvmix_tke_put_tke_real(varname,val,tke_userdef_constants)
 
   select case(trim(varname))
 
-    case('c_k') 
+    case('c_k')
       tke_constants_out%c_k= val
-    case('c_eps') 
+    case('c_eps')
       tke_constants_out%c_eps= val
-    case('cd') 
+    case('cd')
       tke_constants_out%cd= val
-    case('alpha_tke') 
+    case('alpha_tke')
       tke_constants_out%alpha_tke = val
-    case('mxl_min') 
+    case('mxl_min')
       tke_constants_out%mxl_min = val
     case('kappaM_min')
       tke_constants_out%kappaM_min = val
     case('kappaM_max')
       tke_constants_out%kappaM_max = val
     case('tke_min')
-      tke_constants_out%tke_min = val   
+      tke_constants_out%tke_min = val
     case('clc')
-      tke_constants_out%clc = val 
+      tke_constants_out%clc = val
     case('tke_surf_min')
-      tke_constants_out%tke_surf_min = val    
+      tke_constants_out%tke_surf_min = val
     case DEFAULT
       print*, "ERROR:", trim(varname), " not a valid choice"
       stop 1
@@ -1094,4 +1094,4 @@ end subroutine cvmix_tke_put_tke_real
 !=================================================================================
 
 
-end module cvmix_tke 
+end module cvmix_tke

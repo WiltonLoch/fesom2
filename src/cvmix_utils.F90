@@ -174,7 +174,7 @@ contains
 ! Tidal (Simmons et al)
 !      case("forc_tidal_bottom")
 !        cvmix_att_name = "forc_tidal_bottom"
- 
+
 
       ! Variables on level interfaces
       case ("zw", "zw_iface")
@@ -292,7 +292,7 @@ contains
       E_iw_out                                                    ,& !
       iw_diss_out                                                 ,& !
       tke_out                                                     ,& !
-      tke_diss_out                                                   !  
+      tke_diss_out                                                   !
 
 
     integer :: kw
@@ -313,7 +313,7 @@ contains
             KappaH_out(kw) = max(KappaH_out(kw), new_KappaH(kw))
         end do
 !
-!      !This is the only option IDEMIX&TKE use to update to new values  
+!      !This is the only option IDEMIX&TKE use to update to new values
       case (CVMIX_OVERWRITE_OLD_VAL)
         if ((present(tke_diss_out)).and.(present(new_tke_diss))) then
           tke_diss_out = new_tke_diss
@@ -360,7 +360,7 @@ contains
           real*8,dimension(n) :: cp,dp
           real*8 :: m,fxa
           integer i
-  
+
   ! initialize c-prime and d-prime
           cp(1) = c(1)/b(1)
           dp(1) = d(1)/b(1)
@@ -411,7 +411,7 @@ contains
 !!!    dp(i) = (d(i)-dp(i+1)*a(i))*fxa
 !!!  enddo
 !!!
-!!!  ! initialize x 
+!!!  ! initialize x
 !!!  x(1) = dp(1)
 !!!
 !!!  ! solve for x from the vectors c-prime and d-prime
@@ -420,8 +420,5 @@ contains
 !!!  end do
 !!!
 !!!end subroutine solve_tridiag
-
-
-
 
 end module cvmix_utils
