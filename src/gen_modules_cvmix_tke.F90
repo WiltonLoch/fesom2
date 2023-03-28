@@ -495,13 +495,17 @@ module g_cvmix_tke
 
         !_______________________________________________________________________
         ! write out diffusivity
-        call exchange_nod(tke_Kv, partit)
-        Kv = tke_Kv
-
         !_______________________________________________________________________
         ! write out viscosity -->interpolate therefor from nodes to elements
         call exchange_nod(tke_Av, partit) !Warning: don't forget to communicate before averaging on elements!!!
-        Av = 0.0_WP
+        call exchange_nod(tke_Kv, partit)
+        do node = 1, node_size
+            do nz = 1, nl
+                Kv(nz, node) = tke_Kv(nz, node)
+                Av(nz, node) = 0.0_WP
+            end do
+        end do
+
         do elem=1, myDim_elem2D
             elnodes=elem2D_nodes(:,elem)
             do nz=ulevels(elem)+1,nlevels(elem)-1
