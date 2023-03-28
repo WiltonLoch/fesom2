@@ -439,52 +439,52 @@ module g_cvmix_tke
                 tke_old    = tke(nz, node)
             end do
 
-            call cvmix_coeffs_tke(&
+            call cvmix_coeffs_tke(                                 &
                 ! parameter
-                dzw          = hnode(nun:nln,node),               & ! distance between layer interface --> hnode
-                dzt          = dz_trr(nun:nln+1),                   & ! distnace between tracer points
-!                 nlev         = nln,                         &
-                nlev         = nln-nun+1,                         &
-                max_nlev     = nl-1,                        &
-                dtime        = dt,                          &
-                rho_ref      = density_0,                   &
-                grav         = g,                           &
+                dzw          = hnode(nun:nln,node),                & ! distance between layer interface --> hnode
+                dzt          = dz_trr(nun:nln+1),                  & ! distnace between tracer points
+!                 nlev         = nln,                              &
+                nlev         = nln-nun+1,                          &
+                max_nlev     = nl-1,                               &
+                dtime        = dt,                                 &
+                rho_ref      = density_0,                          &
+                grav         = g,                                  &
                 ! essentials
-                tke_new      = tke(       nun:nln+1,node),                 & ! out--> turbulent kinetic energy
-                KappaM_out   = tke_Av(    nun:nln+1,node),              & ! out
-                KappaH_out   = tke_Kv(    nun:nln+1,node),              & ! out
-                tke_old      = tke_old(   nun:nln+1),                  & ! in --> turbulent kinetic energy previous time step
-                old_KappaM   = tke_Av_old(nun:nln+1),               & ! in
-                old_KappaH   = tke_Kv_old(nun:nln+1),               & ! in
-                Ssqr         = vshear2(   nun:nln+1),                  & ! in --> square vert. vel. shear
-                Nsqr         = bvfreq2(   nun:nln+1),                  & ! in --> square brunt Väisälä freq
-                alpha_c      = tke_in3d_iwealphac(nun:nln+1,node),  & ! in for IDEMIX Ri
-                E_iw         = tke_in3d_iwe(nun:nln+1,node),        & ! in for IDEMIX Ri
+                tke_new      = tke       (nun:nln+1,node),         & ! out--> turbulent kinetic energy
+                KappaM_out   = tke_Av    (nun:nln+1,node),         & ! out
+                KappaH_out   = tke_Kv    (nun:nln+1,node),         & ! out
+                tke_old      = tke_old   (nun:nln+1),              & ! in --> turbulent kinetic energy previous time step
+                old_KappaM   = tke_Av_old(nun:nln+1),              & ! in
+                old_KappaH   = tke_Kv_old(nun:nln+1),              & ! in
+                Ssqr         = vshear2   (nun:nln+1),              & ! in --> square vert. vel. shear
+                Nsqr         = bvfreq2   (nun:nln+1),              & ! in --> square brunt Väisälä freq
+                alpha_c      = tke_in3d_iwealphac(nun:nln+1,node), & ! in for IDEMIX Ri
+                E_iw         = tke_in3d_iwe(nun:nln+1,node),       & ! in for IDEMIX Ri
                 ! forcing
-                forc_tke_surf= tke_forc2d_normstress(   node), & ! in --> wind stress
-                forc_rho_surf= tke_forc2d_rhosurf(      node), & ! in
-                bottom_fric  = tke_forc2d_botfrict(     node), & ! in
-                iw_diss      = tke_in3d_iwdis(nun:nln+1,node), & ! in
+                forc_tke_surf= tke_forc2d_normstress(node),        & ! in --> wind stress
+                forc_rho_surf= tke_forc2d_rhosurf   (node),        & ! in
+                bottom_fric  = tke_forc2d_botfrict  (node),        & ! in
+                iw_diss      = tke_in3d_iwdis(nun:nln+1,node),     & ! in
                 ! diagnostics
-                tke_plc      = tke_langmuir(nun:nln+1,node),   & ! in
-                tke_Tbpr     = tke_Tbpr(nun:nln+1,node),            & ! buoyancy production
-                tke_Tspr     = tke_Tspr(nun:nln+1,node),            & ! shear production
-                tke_Tdif     = tke_Tdif(nun:nln+1,node),            & ! vertical diffusion d/dz(k d/dz)TKE
-                tke_Tdis     = tke_Tdis(nun:nln+1,node),            & ! dissipation
-                tke_Twin     = tke_Twin(nun:nln+1,node),            & ! wind forcing
-                tke_Tiwf     = tke_Tiwf(nun:nln+1,node),            & ! internal wave forcing when idemix is used
-                tke_Tbck     = tke_Tbck(nun:nln+1,node),            & ! background forcing only active if IDEMIX is not active, forcing that results from resetting TKE to minimum background TKE value
-                tke_Ttot     = tke_Ttot(nun:nln+1,node),            & ! sum of all terms
-                tke_Lmix     = tke_Lmix(nun:nln+1,node),            & ! mixing length scale of the TKE scheme
-                tke_Pr       = tke_Pr(  nun:nln+1,node),              & ! Prantl number
+                tke_plc      = tke_langmuir(nun:nln+1,node),       & ! in
+                tke_Tbpr     = tke_Tbpr(nun:nln+1,node),           & ! buoyancy production
+                tke_Tspr     = tke_Tspr(nun:nln+1,node),           & ! shear production
+                tke_Tdif     = tke_Tdif(nun:nln+1,node),           & ! vertical diffusion d/dz(k d/dz)TKE
+                tke_Tdis     = tke_Tdis(nun:nln+1,node),           & ! dissipation
+                tke_Twin     = tke_Twin(nun:nln+1,node),           & ! wind forcing
+                tke_Tiwf     = tke_Tiwf(nun:nln+1,node),           & ! internal wave forcing when idemix is used
+                tke_Tbck     = tke_Tbck(nun:nln+1,node),           & ! background forcing only active if IDEMIX is not active, forcing that results from resetting TKE to minimum background TKE value
+                tke_Ttot     = tke_Ttot(nun:nln+1,node),           & ! sum of all terms
+                tke_Lmix     = tke_Lmix(nun:nln+1,node),           & ! mixing length scale of the TKE scheme
+                tke_Pr       = tke_Pr  (nun:nln+1,node),           & ! Prantl number
                 ! debugging
-                cvmix_int_1  = cvmix_dummy_1(nun:nln+1,node),        & !
-                cvmix_int_2  = cvmix_dummy_2(nun:nln+1,node),        & !
-                cvmix_int_3  = cvmix_dummy_3(nun:nln+1,node),        & !
-                i = 1,                                       &
-                j = 1,                                       &
-                tstep_count = tstep_count                    &
-                )
+                cvmix_int_1  = cvmix_dummy_1(nun:nln+1,node),      & !
+                cvmix_int_2  = cvmix_dummy_2(nun:nln+1,node),      & !
+                cvmix_int_3  = cvmix_dummy_3(nun:nln+1,node),      & !
+                i = 1,                                             &
+                j = 1,                                             &
+                tstep_count = tstep_count                          &
+            )
 
             tke_Av(nln+1,node)=0.0_WP
             tke_Kv(nln+1,node)=0.0_WP
