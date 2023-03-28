@@ -296,15 +296,21 @@ module g_cvmix_tke
         node_size = myDim_nod2D
         !_______________________________________________________________________
         ! calculate all neccessary forcing for TKE
-        tke_forc2d_normstress = 0.0_WP
-        tke_forc2d_botfrict   = 0.0_WP
-        tke_forc2d_rhosurf    = 0.0_WP
+        do node = 1, node_size
+            tke_forc2d_normstress(node) = 0.0_WP
+            tke_forc2d_botfrict(node)   = 0.0_WP
+            tke_forc2d_rhosurf(node)    = 0.0_WP
+        end do
 
         ! load things from idemix when selected
         if (.not. tke_only) then
-            tke_in3d_iwe       = iwe_n
-            tke_in3d_iwdis     = -iwe_Tdis_n
-            tke_in3d_iwealphac = iwe_alpha_c_n
+            do node = 1, node_size
+                do nz = 1, nl
+                    tke_in3d_iwe(nz, node)       = iwe_n(nz, node)
+                    tke_in3d_iwdis(nz, node)     = -iwe_Tdis_n(nz, node)
+                    tke_in3d_iwealphac(nz, node) = iwe_alpha_c_n(nz, node)
+                end do
+            end do
         endif
 
         !_______________________________________________________________________
@@ -339,20 +345,24 @@ module g_cvmix_tke
             ! tke_forc2d_botfrict(node) = 0.0_WP
             ! tke_forc2d_rhosurf(node)  = 0.0_WP
 
-            !___________________________________________________________________
-            ! calculate for TKE square of Brünt-Väisälä frequency, be aware that
-            ! bvfreq contains already the squared brünt Väisälä frequency ...
-            bvfreq2        = 0.0_WP
-            !!PS bvfreq2(2:nln) = bvfreq(2:nln,node)
-            bvfreq2(nun+1:nln) = bvfreq(nun+1:nln,node)
+            do nz = 1, nl
+                bvfreq2(nz) = 0.0_WP
+                dz_trr (nz) = 0.0_WP
+                if(nun < nz .and. nz <= nln) then
+                    !___________________________________________________________________
+                    ! calculate for TKE square of Brünt-Väisälä frequency, be aware that
+                    ! bvfreq contains already the squared brünt Väisälä frequency ...
+                    !!PS bvfreq2(2:nln) = bvfreq(2:nln,node)
+                    bvfreq2(nz) = bvfreq(nz, node)
 
-            !___________________________________________________________________
-            ! dz_trr distance between tracer points, surface and bottom dz_trr is half
-            ! the layerthickness ...
-            dz_trr            = 0.0_WP
-            dz_trr(nun+1:nln) = abs(Z_3d_n(nun:nln-1,node)-Z_3d_n(nun+1:nln,node))
-            dz_trr(nun)       = hnode(nun,node)/2.0_WP
-            dz_trr(nln+1)     = hnode(nln,node)/2.0_WP
+                    !___________________________________________________________________
+                    ! dz_trr distance between tracer points, surface and bottom dz_trr is half
+                    ! the layerthickness ...
+                    dz_trr(nz) = abs(Z_3d_n(nz - 1, node) - Z_3d_n(nz, node))
+                end if
+            end do
+            dz_trr(nun)     = hnode(nun,node) / 2.0_WP
+            dz_trr(nln + 1) = hnode(nln,node) / 2.0_WP
 
             !___________________________________________________________________
             ! calculate Langmuir cell additional term after Axell (2002)
@@ -423,9 +433,11 @@ module g_cvmix_tke
 
             !___________________________________________________________________
             ! main cvmix call to calculate tke
-            tke_Av_old = tke_Av(:,node)
-            tke_Kv_old = tke_Kv(:,node)
-            tke_old    = tke(:,node)
+            do nz = 1, nl
+                tke_Av_old = tke_Av(nz, node)
+                tke_Kv_old = tke_Kv(nz, node)
+                tke_old    = tke(nz, node)
+            end do
 
             call cvmix_coeffs_tke(&
                 ! parameter
